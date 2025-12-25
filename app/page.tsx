@@ -4,6 +4,19 @@ import { StationLevelSelector } from "@/components/hideout/StationLevelSelector"
 import { UpgradeFocusManager } from "@/components/hideout/UpgradeFocusManager";
 import { ItemSummaryTable } from "@/components/hideout/ItemSummaryTable";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Home",
+  description:
+    "Track your Escape from Tarkov hideout upgrade requirements, manage inventory, and plan your upgrade path. Calculate item requirements for focused upgrades and future needs.",
+  openGraph: {
+    title:
+      "Tarkov Hideout Tracker - Track Your Escape from Tarkov Hideout Upgrades",
+    description:
+      "Track your Escape from Tarkov hideout upgrade requirements, manage inventory, and plan your upgrade path.",
+  },
+};
 
 export default function Page() {
   return (
