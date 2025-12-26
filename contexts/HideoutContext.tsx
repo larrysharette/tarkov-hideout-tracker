@@ -26,7 +26,7 @@ import { getUpgradeKey } from "@/lib/utils/hideout-data";
 const STORAGE_KEY = "tarkov-hideout-state";
 const STORAGE_VERSION = 1;
 
-interface StoredState {
+export interface StoredState {
   version: number;
   userState: UserHideoutState;
 }
@@ -36,6 +36,8 @@ const defaultUserState: UserHideoutState = {
   inventory: {},
   focusedUpgrades: [],
   traderLevels: {},
+  completedQuests: [],
+  watchlist: {},
 };
 
 const HideoutContext = createContext<HideoutContextValue | null>(null);
@@ -234,6 +236,76 @@ export function HideoutProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
+  const toggleQuestCompletion = useCallback((questId: string) => {
+    setUserState((prev) => {
+      const completedQuests = new Set(prev.completedQuests || []);
+      if (completedQuests.has(questId)) {
+        completedQuests.delete(questId);
+      } else {
+        completedQuests.add(questId);
+      }
+      return {
+        ...prev,
+        completedQuests: Array.from(completedQuests),
+      };
+    });
+  }, []);
+
+  const addToWatchlist = useCallback((itemName: string, quantity: number) => {
+    setUserState((prev) => {
+      const currentQuantity = prev.watchlist?.[itemName] || 0;
+      return {
+        ...prev,
+        watchlist: {
+          ...(prev.watchlist || {}),
+          [itemName]: currentQuantity + quantity,
+        },
+      };
+    });
+  }, []);
+
+  const setWatchlistQuantity = useCallback(
+    (itemName: string, quantity: number) => {
+      setUserState((prev) => {
+        if (quantity <= 0) {
+          const watchlist = { ...(prev.watchlist || {}) };
+          delete watchlist[itemName];
+          return {
+            ...prev,
+            watchlist:
+              Object.keys(watchlist).length > 0 ? watchlist : undefined,
+          };
+        }
+        return {
+          ...prev,
+          watchlist: {
+            ...(prev.watchlist || {}),
+            [itemName]: quantity,
+          },
+        };
+      });
+    },
+    []
+  );
+
+  const removeFromWatchlist = useCallback((itemName: string) => {
+    setUserState((prev) => {
+      const watchlist = { ...(prev.watchlist || {}) };
+      delete watchlist[itemName];
+      return {
+        ...prev,
+        watchlist: Object.keys(watchlist).length > 0 ? watchlist : undefined,
+      };
+    });
+  }, []);
+
+  const isInWatchlist = useCallback(
+    (itemName: string) => {
+      return (userState.watchlist?.[itemName] || 0) > 0;
+    },
+    [userState.watchlist]
+  );
+
   // Computed values
   const getItemSummary = useCallback((): ItemSummary[] => {
     if (!hideoutData) return [];
@@ -264,6 +336,11 @@ export function HideoutProvider({ children }: { children: React.ReactNode }) {
     resetHideoutLevels,
     setTraderLevel,
     purchaseUpgrade,
+    toggleQuestCompletion,
+    addToWatchlist,
+    setWatchlistQuantity,
+    removeFromWatchlist,
+    isInWatchlist,
     getItemSummary,
     getAvailableUpgrades: () => getAvailableUpgradesMemo,
     getFocusedUpgrades: () => getFocusedUpgradesMemo,

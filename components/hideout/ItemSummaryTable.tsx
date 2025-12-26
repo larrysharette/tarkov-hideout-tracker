@@ -24,6 +24,8 @@ import {
   IconChevronUp,
   IconChevronDown,
   IconSelector,
+  IconEye,
+  IconEyeOff,
 } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
 import type { ItemSummary } from "@/lib/types/hideout";
@@ -54,6 +56,9 @@ export function ItemSummaryTable() {
     hideoutData,
     userState,
     getAvailableUpgrades,
+    addToWatchlist,
+    removeFromWatchlist,
+    isInWatchlist,
   } = useHideout();
   const [searchQuery, setSearchQuery] = useState("");
   const [sortField, setSortField] = useState<SortField | null>(null);
@@ -353,6 +358,8 @@ export function ItemSummaryTable() {
                 }
               }
 
+              const isWatched = isInWatchlist(item.itemName);
+
               return (
                 <Card
                   key={item.itemName}
@@ -364,9 +371,40 @@ export function ItemSummaryTable() {
                 >
                   <CardContent className="px-2 py-1 space-y-1">
                     <div className="flex items-center justify-between gap-1.5">
-                      <span className="font-medium text-xs leading-tight flex-1 min-w-0 truncate">
-                        {item.itemName}
-                      </span>
+                      <div className="flex items-center gap-1 flex-1 min-w-0">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-5 w-5 shrink-0"
+                          onClick={() => {
+                            if (isWatched) {
+                              removeFromWatchlist(item.itemName);
+                            } else {
+                              const quantityToAdd = Math.max(
+                                1,
+                                item.requiredNow > 0
+                                  ? item.requiredNow - item.owned
+                                  : item.totalRequired - item.owned
+                              );
+                              addToWatchlist(item.itemName, quantityToAdd);
+                            }
+                          }}
+                          title={
+                            isWatched
+                              ? "Remove from watchlist"
+                              : "Add to watchlist"
+                          }
+                        >
+                          {isWatched ? (
+                            <IconEye className="h-3.5 w-3.5 text-primary" />
+                          ) : (
+                            <IconEyeOff className="h-3.5 w-3.5 text-muted-foreground" />
+                          )}
+                        </Button>
+                        <span className="font-medium text-xs leading-tight flex-1 min-w-0 truncate">
+                          {item.itemName}
+                        </span>
+                      </div>
                       <Input
                         type="number"
                         min="0"
@@ -440,6 +478,7 @@ export function ItemSummaryTable() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-12"></TableHead>
                 <TableHead>
                   <SortButton field="itemName">Item Name</SortButton>
                 </TableHead>
@@ -475,7 +514,7 @@ export function ItemSummaryTable() {
             <TableBody>
               {visibleItems.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8">
+                  <TableCell colSpan={7} className="text-center py-8">
                     <div className="flex flex-col items-center gap-2 text-muted-foreground">
                       <p className="text-sm font-medium">
                         {searchQuery ? "No items found" : "No items to display"}
@@ -492,6 +531,7 @@ export function ItemSummaryTable() {
               ) : (
                 visibleItems.map((item) => {
                   const isFocused = item.requiredNow > 0;
+                  const isWatched = isInWatchlist(item.itemName);
                   // For focused items: remaining based on requiredNow
                   // For non-focused items: remaining based on totalRequired
                   const remainingForDisplay = isFocused
@@ -569,6 +609,37 @@ export function ItemSummaryTable() {
                         isFocused && "bg-primary/5 ring-1 ring-primary/20"
                       )}
                     >
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          onClick={() => {
+                            if (isWatched) {
+                              removeFromWatchlist(item.itemName);
+                            } else {
+                              const quantityToAdd = Math.max(
+                                1,
+                                remainingForDisplay > 0
+                                  ? remainingForDisplay
+                                  : 1
+                              );
+                              addToWatchlist(item.itemName, quantityToAdd);
+                            }
+                          }}
+                          title={
+                            isWatched
+                              ? "Remove from watchlist"
+                              : "Add to watchlist"
+                          }
+                        >
+                          {isWatched ? (
+                            <IconEye className="h-4 w-4 text-primary" />
+                          ) : (
+                            <IconEyeOff className="h-4 w-4 text-muted-foreground" />
+                          )}
+                        </Button>
+                      </TableCell>
                       <TableCell className="font-medium">
                         <span className="wrap-break-word">{item.itemName}</span>
                       </TableCell>

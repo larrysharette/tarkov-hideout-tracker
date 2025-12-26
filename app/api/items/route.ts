@@ -7,10 +7,42 @@ const GRAPHQL_ENDPOINT = "https://api.tarkov.dev/graphql";
 
 const ITEMS_QUERY = `
   query {
-    items(types: [barter, meds], limit: 1000) {
+    items(types: [barter, meds, keys, injectors], lang: en) {
       id
       name
       iconLink
+      wikiLink
+      usedInTasks {
+        id
+        name
+      }
+      craftsFor {
+        id
+        station {
+          name
+        }
+        requiredItems {
+          item {
+            id
+            name
+            iconLink
+          }
+          count
+        }
+      }
+      craftsUsing {
+        id
+        station {
+          name
+        }
+        rewardItems {
+          count
+          item {
+            name
+            id
+          }
+        }
+      }
     }
   }
 `;
@@ -21,6 +53,38 @@ export interface GraphQLItemsResponse {
       id: string;
       name: string;
       iconLink: string;
+      wikiLink: string;
+      usedInTasks: Array<{
+        id: string;
+        name: string;
+      }>;
+      craftsFor: Array<{
+        id: string;
+        station: {
+          name: string;
+        };
+        requiredItems: Array<{
+          item: {
+            id: string;
+            name: string;
+            iconLink: string;
+          };
+          count: number;
+        }>;
+      }>;
+      craftsUsing: Array<{
+        id: string;
+        station: {
+          name: string;
+        };
+        rewardItems: Array<{
+          count: number;
+          item: {
+            name: string;
+            id: string;
+          };
+        }>;
+      }>;
     }>;
   };
   errors?: Array<{
@@ -34,6 +98,38 @@ export interface Item {
   id: string;
   name: string;
   iconLink: string;
+  wikiLink: string;
+  usedInTasks: Array<{
+    id: string;
+    name: string;
+  }>;
+  craftsFor: Array<{
+    id: string;
+    station: {
+      name: string;
+    };
+    requiredItems: Array<{
+      item: {
+        id: string;
+        name: string;
+        iconLink: string;
+      };
+      count: number;
+    }>;
+  }>;
+  craftsUsing: Array<{
+    id: string;
+    station: {
+      name: string;
+    };
+    rewardItems: Array<{
+      count: number;
+      item: {
+        name: string;
+        id: string;
+      };
+    }>;
+  }>;
 }
 
 export async function GET() {

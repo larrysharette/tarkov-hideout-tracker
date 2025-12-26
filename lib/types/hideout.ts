@@ -125,6 +125,8 @@ export interface UserHideoutState {
   inventory: Record<string, number>; // itemName -> quantity owned
   focusedUpgrades: string[]; // Array of "stationId-level" keys (using array for JSON serialization)
   traderLevels?: Record<string, number>; // traderName -> level (optional for now)
+  completedQuests?: string[]; // Array of quest IDs that are completed
+  watchlist?: Record<string, number>; // itemName -> quantity needed (optional for backward compatibility)
 }
 
 export interface ItemSummary {
@@ -162,6 +164,11 @@ export interface HideoutContextValue {
   resetHideoutLevels: () => void;
   setTraderLevel: (traderName: string, level: number) => void;
   purchaseUpgrade: (upgrade: StationLevel) => void;
+  toggleQuestCompletion: (questId: string) => void;
+  addToWatchlist: (itemName: string, quantity: number) => void;
+  setWatchlistQuantity: (itemName: string, quantity: number) => void;
+  removeFromWatchlist: (itemName: string) => void;
+  isInWatchlist: (itemName: string) => boolean;
 
   // Computed
   getItemSummary: () => ItemSummary[];
