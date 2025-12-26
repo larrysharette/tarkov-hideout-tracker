@@ -36,7 +36,7 @@ export function ExportDialog({ open, onOpenChange }: ExportDialogProps) {
 
   const handleCopy = async () => {
     if (!exportData) return;
-    
+
     try {
       await navigator.clipboard.writeText(exportData);
       setCopied(true);
@@ -53,7 +53,9 @@ export function ExportDialog({ open, onOpenChange }: ExportDialogProps) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `tarkov-tracker-export-${new Date().toISOString().split("T")[0]}.yaml`;
+    a.download = `tarkov-tracker-export-${
+      new Date().toISOString().split("T")[0]
+    }.yaml`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -74,7 +76,7 @@ export function ExportDialog({ open, onOpenChange }: ExportDialogProps) {
           <Textarea
             value={exportData}
             readOnly
-            className="font-mono text-xs min-h-[200px]"
+            className="font-mono text-xs min-h-[200px] max-h-[400px] overflow-y-auto"
             placeholder="No data to export"
           />
           <div className="flex items-center gap-2">
@@ -105,4 +107,3 @@ export function ExportDialog({ open, onOpenChange }: ExportDialogProps) {
     </Dialog>
   );
 }
-

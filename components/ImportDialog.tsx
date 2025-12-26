@@ -113,7 +113,7 @@ export function ImportDialog({ open, onOpenChange }: ImportDialogProps) {
                 setSuccess(false);
               }}
               placeholder="Paste your exported data here..."
-              className="font-mono text-xs min-h-[200px]"
+              className="font-mono text-xs min-h-[200px] max-h-[400px] overflow-y-auto"
             />
           </div>
           {error && (
