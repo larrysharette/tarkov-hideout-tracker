@@ -3,6 +3,12 @@
 import { useMemo, memo } from "react";
 import type { StationLevel, UserHideoutState } from "@/lib/types/hideout";
 import { Badge } from "@/components/ui/badge";
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/ui/tooltip";
+import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import { getUnmetRequirements } from "@/lib/utils/hideout-calculations";
 
@@ -31,6 +37,44 @@ export const UpgradeCard = memo(function UpgradeCard({
   const unmetRequirements = useMemo(() => {
     return getUnmetRequirements(upgrade, userState);
   }, [upgrade, userState]);
+
+  const itemProgress = useMemo(() => {
+    if (upgrade.itemRequirements.length === 0) {
+      return null;
+    }
+
+    // Items to exclude from progress calculation
+    const excludedItems = new Set(["Roubles", "Euros"]);
+
+    let totalRequired = 0;
+    let totalOwned = 0;
+
+    for (const req of upgrade.itemRequirements) {
+      // Skip Roubles and Euros
+      if (excludedItems.has(req.itemName)) {
+        continue;
+      }
+
+      totalRequired += req.count;
+      const owned = userState.inventory[req.itemName] || 0;
+      // Cap owned at required count (don't count excess)
+      totalOwned += Math.min(owned, req.count);
+    }
+
+    // If all items were excluded, return null
+    if (totalRequired === 0) {
+      return null;
+    }
+
+    const percentage =
+      totalRequired > 0 ? Math.min((totalOwned / totalRequired) * 100, 100) : 0;
+
+    return {
+      percentage,
+      owned: totalOwned,
+      required: totalRequired,
+    };
+  }, [upgrade.itemRequirements, userState.inventory]);
 
   return (
     <div
@@ -134,11 +178,35 @@ export const UpgradeCard = memo(function UpgradeCard({
                   </Badge>
                 ))}
                 {upgrade.itemRequirements.length > 5 && (
-                  <Badge variant="secondary" className="text-xs">
-                    +{upgrade.itemRequirements.length - 5} more
-                  </Badge>
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <Badge variant="secondary" className="text-xs">
+                        +{upgrade.itemRequirements.length - 5} more
+                      </Badge>
+                    </TooltipTrigger>
+                    <TooltipContent className="bg-background text-foreground">
+                      <div className="space-y-1">
+                        {upgrade.itemRequirements.slice(5).map((req, idx) => (
+                          <div key={idx} className="text-xs">
+                            {req.itemName} x{req.count}
+                          </div>
+                        ))}
+                      </div>
+                    </TooltipContent>
+                  </Tooltip>
                 )}
               </div>
+              {isAvailable && itemProgress && (
+                <div className="mt-2 space-y-1">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-muted-foreground">Progress</span>
+                    <span className="text-muted-foreground">
+                      {itemProgress.owned} / {itemProgress.required}
+                    </span>
+                  </div>
+                  <Progress value={itemProgress.percentage} />
+                </div>
+              )}
             </div>
           )}
         </div>
