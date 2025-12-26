@@ -73,6 +73,7 @@ const nextConfig: NextConfig = {
   // Environment variable validation (optional but recommended)
   env: {
     NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
+    NEXT_PUBLIC_BUILD_DATE: new Date().toISOString(),
   },
 };
 
