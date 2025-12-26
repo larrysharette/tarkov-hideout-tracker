@@ -161,6 +161,7 @@ export interface HideoutContextValue {
   resetInventory: () => void;
   resetHideoutLevels: () => void;
   setTraderLevel: (traderName: string, level: number) => void;
+  purchaseUpgrade: (upgrade: StationLevel) => void;
 
   // Computed
   getItemSummary: () => ItemSummary[];

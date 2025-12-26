@@ -40,18 +40,17 @@ const defaultUserState: UserHideoutState = {
 
 const HideoutContext = createContext<HideoutContextValue | null>(null);
 
-export function HideoutProvider({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  const [hideoutData, setHideoutData] =
-    useState<TransformedHideoutData | null>(null);
-  const [tradersData, setTradersData] =
-    useState<TransformedTradersData | null>(null);
+export function HideoutProvider({ children }: { children: React.ReactNode }) {
+  const [hideoutData, setHideoutData] = useState<TransformedHideoutData | null>(
+    null
+  );
+  const [tradersData, setTradersData] = useState<TransformedTradersData | null>(
+    null
+  );
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [userState, setUserState] = useState<UserHideoutState>(defaultUserState);
+  const [userState, setUserState] =
+    useState<UserHideoutState>(defaultUserState);
 
   // Load hideout data from API
   useEffect(() => {
@@ -67,11 +66,15 @@ export function HideoutProvider({
         ]);
 
         if (!hideoutResponse.ok) {
-          throw new Error(`Failed to fetch hideout: ${hideoutResponse.statusText}`);
+          throw new Error(
+            `Failed to fetch hideout: ${hideoutResponse.statusText}`
+          );
         }
 
         if (!tradersResponse.ok) {
-          throw new Error(`Failed to fetch traders: ${tradersResponse.statusText}`);
+          throw new Error(
+            `Failed to fetch traders: ${tradersResponse.statusText}`
+          );
         }
 
         const hideoutData = await hideoutResponse.json();
@@ -80,14 +83,14 @@ export function HideoutProvider({
         // Convert object back to Map
         const transformedHideoutData: TransformedHideoutData = {
           stations: hideoutData.stations,
-          stationLevelsMap: new Map(Object.entries(hideoutData.stationLevelsMap)),
+          stationLevelsMap: new Map(
+            Object.entries(hideoutData.stationLevelsMap)
+          ),
         };
         setHideoutData(transformedHideoutData);
         setTradersData(tradersData);
       } catch (err) {
-        setError(
-          err instanceof Error ? err.message : "Failed to load data"
-        );
+        setError(err instanceof Error ? err.message : "Failed to load data");
         console.error("Error loading data:", err);
       } finally {
         setIsLoading(false);
@@ -127,18 +130,15 @@ export function HideoutProvider({
   }, [userState]);
 
   // Actions
-  const setStationLevel = useCallback(
-    (stationId: string, level: number) => {
-      setUserState((prev) => ({
-        ...prev,
-        stationLevels: {
-          ...prev.stationLevels,
-          [stationId]: level,
-        },
-      }));
-    },
-    []
-  );
+  const setStationLevel = useCallback((stationId: string, level: number) => {
+    setUserState((prev) => ({
+      ...prev,
+      stationLevels: {
+        ...prev.stationLevels,
+        [stationId]: level,
+      },
+    }));
+  }, []);
 
   const setInventoryQuantity = useCallback(
     (itemName: string, quantity: number) => {
@@ -195,18 +195,44 @@ export function HideoutProvider({
     }));
   }, []);
 
-  const setTraderLevel = useCallback(
-    (traderName: string, level: number) => {
-      setUserState((prev) => ({
+  const setTraderLevel = useCallback((traderName: string, level: number) => {
+    setUserState((prev) => ({
+      ...prev,
+      traderLevels: {
+        ...(prev.traderLevels || {}),
+        [traderName]: level,
+      },
+    }));
+  }, []);
+
+  const purchaseUpgrade = useCallback((upgrade: StationLevel) => {
+    setUserState((prev) => {
+      // Update station level
+      const updatedStationLevels = {
+        ...prev.stationLevels,
+        [upgrade.stationId]: upgrade.level,
+      };
+
+      // Update inventory by subtracting item requirements
+      const updatedInventory = { ...prev.inventory };
+      for (const req of upgrade.itemRequirements) {
+        const currentQuantity = updatedInventory[req.itemName] || 0;
+        const newQuantity = Math.max(0, currentQuantity - req.count);
+        if (newQuantity > 0) {
+          updatedInventory[req.itemName] = newQuantity;
+        } else {
+          // Remove item from inventory if quantity is 0
+          delete updatedInventory[req.itemName];
+        }
+      }
+
+      return {
         ...prev,
-        traderLevels: {
-          ...(prev.traderLevels || {}),
-          [traderName]: level,
-        },
-      }));
-    },
-    []
-  );
+        stationLevels: updatedStationLevels,
+        inventory: updatedInventory,
+      };
+    });
+  }, []);
 
   // Computed values
   const getItemSummary = useCallback((): ItemSummary[] => {
@@ -237,6 +263,7 @@ export function HideoutProvider({
     resetInventory,
     resetHideoutLevels,
     setTraderLevel,
+    purchaseUpgrade,
     getItemSummary,
     getAvailableUpgrades: () => getAvailableUpgradesMemo,
     getFocusedUpgrades: () => getFocusedUpgradesMemo,
@@ -256,4 +283,3 @@ export function useHideout() {
   }
   return context;
 }
-

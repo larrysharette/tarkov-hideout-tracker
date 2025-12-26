@@ -17,6 +17,7 @@ export function UpgradeFocusManager() {
     toggleFocusedUpgrade,
     clearFocusedUpgrades,
     getAvailableUpgrades,
+    purchaseUpgrade,
   } = useHideout();
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -132,7 +133,7 @@ export function UpgradeFocusManager() {
           )}
         </div>
 
-        <div className="space-y-4 max-h-[600px] overflow-y-auto">
+        <div className="space-y-4 md:max-h-[600px] overflow-y-auto">
           {displayedUpgrades.size === 0 ? (
             <p className="text-center text-muted-foreground text-sm py-8">
               {searchQuery ? "No upgrades found" : "No upgrades available"}
@@ -181,6 +182,7 @@ export function UpgradeFocusManager() {
                                 upgrade.level
                               )
                             }
+                            onPurchase={() => purchaseUpgrade(upgrade)}
                           />
                         );
                       })}

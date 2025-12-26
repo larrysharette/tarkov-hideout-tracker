@@ -9,6 +9,7 @@ import {
   TooltipContent,
 } from "@/components/ui/tooltip";
 import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { getUnmetRequirements } from "@/lib/utils/hideout-calculations";
 
@@ -18,6 +19,7 @@ interface UpgradeCardProps {
   isAvailable: boolean;
   userState: UserHideoutState;
   onToggleFocus: () => void;
+  onPurchase?: () => void;
 }
 
 export const UpgradeCard = memo(function UpgradeCard({
@@ -26,6 +28,7 @@ export const UpgradeCard = memo(function UpgradeCard({
   isAvailable,
   userState,
   onToggleFocus,
+  onPurchase,
 }: UpgradeCardProps) {
   const hasRequirements = useMemo(() => {
     return (
@@ -196,15 +199,32 @@ export const UpgradeCard = memo(function UpgradeCard({
                   </Tooltip>
                 )}
               </div>
-              {isAvailable && itemProgress && (
-                <div className="mt-2 space-y-1">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-muted-foreground">Progress</span>
-                    <span className="text-muted-foreground">
-                      {itemProgress.owned} / {itemProgress.required}
-                    </span>
-                  </div>
-                  <Progress value={itemProgress.percentage} />
+              {isAvailable && (
+                <div className="mt-2 space-y-2">
+                  {itemProgress && (
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-muted-foreground">Progress</span>
+                        <span className="text-muted-foreground">
+                          {itemProgress.owned} / {itemProgress.required}
+                        </span>
+                      </div>
+                      <Progress value={itemProgress.percentage} />
+                    </div>
+                  )}
+                  {onPurchase && (
+                    <Button
+                      variant="default"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onPurchase();
+                      }}
+                      className="w-full"
+                    >
+                      Purchase Upgrade
+                    </Button>
+                  )}
                 </div>
               )}
             </div>

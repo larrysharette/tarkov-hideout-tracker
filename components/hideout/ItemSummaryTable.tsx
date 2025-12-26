@@ -27,6 +27,8 @@ import {
 } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
 import type { ItemSummary } from "@/lib/types/hideout";
+import { RecordRaidDialog } from "./RecordRaidDialog";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 type SortField = keyof ItemSummary;
 type SortDirection = "asc" | "desc" | null;
@@ -211,14 +213,17 @@ export function ItemSummaryTable() {
 
   return (
     <div className="space-y-4">
-      <div>
-        <h2 className="text-xl font-semibold mb-1">Item Summary</h2>
-        <p className="text-muted-foreground text-sm">
-          Overview of items needed for hideout upgrades
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-semibold mb-1">Item Summary</h2>
+          <p className="text-muted-foreground text-sm">
+            Overview of items needed for hideout upgrades
+          </p>
+        </div>
+        <RecordRaidDialog />
       </div>
       <div className="space-y-4">
-        <div className="flex gap-2 items-center">
+        <div className="flex flex-col md:flex-row gap-2 md:items-center">
           <Input
             type="text"
             placeholder="Search items..."
@@ -226,31 +231,212 @@ export function ItemSummaryTable() {
             onChange={(e) => setSearchQuery(e.target.value)}
             className="flex-1"
           />
-          <Select
-            value={filterType}
-            onValueChange={(value) => setFilterType(value as FilterType)}
-            items={FILTER_ITEMS}
-          >
-            <SelectTrigger className="w-[180px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {FILTER_ITEMS.map((item) => (
-                <SelectItem key={item.value} value={item.value}>
-                  {item.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Button
-            variant={showAvailableOnly ? "default" : "outline"}
-            onClick={() => setShowAvailableOnly(!showAvailableOnly)}
-          >
-            {showAvailableOnly ? "Show All" : "Available Only"}
-          </Button>
+          <div className="flex gap-2">
+            <Select
+              value={filterType}
+              onValueChange={(value) => setFilterType(value as FilterType)}
+              items={FILTER_ITEMS}
+            >
+              <SelectTrigger className="w-full md:w-[180px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {FILTER_ITEMS.map((item) => (
+                  <SelectItem key={item.value} value={item.value}>
+                    {item.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button
+              variant={showAvailableOnly ? "default" : "outline"}
+              onClick={() => setShowAvailableOnly(!showAvailableOnly)}
+              className="flex-1 md:flex-initial"
+            >
+              {showAvailableOnly ? "Show All" : "Available Only"}
+            </Button>
+          </div>
         </div>
 
-        <div className="overflow-x-auto -mx-4 px-4">
+        {/* Mobile Card View - shown on mobile, hidden on md and up */}
+        <div className="block md:hidden space-y-0.5">
+          {visibleItems.length === 0 ? (
+            <div className="text-center py-4">
+              <div className="flex flex-col items-center gap-0.5 text-muted-foreground">
+                <p className="text-sm font-medium">
+                  {searchQuery ? "No items found" : "No items to display"}
+                </p>
+                {!searchQuery && (
+                  <p className="text-xs">
+                    Set your hideout levels and focus upgrades to see
+                    requirements.
+                  </p>
+                )}
+              </div>
+            </div>
+          ) : (
+            visibleItems.map((item) => {
+              const isFocused = item.requiredNow > 0;
+              const remainingForDisplay = isFocused
+                ? Math.max(0, item.requiredNow - item.owned)
+                : Math.max(0, item.totalRequired - item.owned);
+
+              let displayStatus: React.ReactNode;
+              if (remainingForDisplay > 0) {
+                displayStatus = (
+                  <Badge
+                    variant="destructive"
+                    className="font-medium text-[10px] px-1 py-0 h-4"
+                  >
+                    {formatNumber(remainingForDisplay)}
+                  </Badge>
+                );
+              } else if (isFocused) {
+                if (item.owned > item.totalRequired) {
+                  displayStatus = (
+                    <Badge
+                      variant="secondary"
+                      className="font-medium text-[10px] px-1 py-0 h-4"
+                    >
+                      +{formatNumber(item.owned - item.totalRequired)} over
+                    </Badge>
+                  );
+                } else if (
+                  item.owned >= item.requiredNow &&
+                  item.owned < item.totalRequired
+                ) {
+                  displayStatus = (
+                    <Badge
+                      variant="secondary"
+                      className="font-medium text-[10px] px-1 py-0 h-4"
+                    >
+                      Complete
+                    </Badge>
+                  );
+                } else if (item.requiredNow > 0) {
+                  displayStatus = (
+                    <Badge
+                      variant="secondary"
+                      className="font-medium text-[10px] px-1 py-0 h-4"
+                    >
+                      Complete
+                    </Badge>
+                  );
+                } else {
+                  displayStatus = (
+                    <span className="text-muted-foreground text-[10px]">-</span>
+                  );
+                }
+              } else {
+                if (item.owned > item.totalRequired && item.totalRequired > 0) {
+                  displayStatus = (
+                    <Badge
+                      variant="secondary"
+                      className="font-medium text-[10px] px-1 py-0 h-4"
+                    >
+                      +{formatNumber(item.owned - item.totalRequired)} over
+                    </Badge>
+                  );
+                } else if (item.totalRequired > 0) {
+                  displayStatus = (
+                    <Badge
+                      variant="secondary"
+                      className="font-medium text-[10px] px-1 py-0 h-4"
+                    >
+                      Complete
+                    </Badge>
+                  );
+                } else {
+                  displayStatus = (
+                    <span className="text-muted-foreground text-[10px]">-</span>
+                  );
+                }
+              }
+
+              return (
+                <Card
+                  key={item.itemName}
+                  size="sm"
+                  className={cn(
+                    "py-1",
+                    isFocused && "ring-1 ring-primary/30 bg-primary/5"
+                  )}
+                >
+                  <CardContent className="px-2 py-1 space-y-1">
+                    <div className="flex items-center justify-between gap-1.5">
+                      <span className="font-medium text-xs leading-tight flex-1 min-w-0 truncate">
+                        {item.itemName}
+                      </span>
+                      <Input
+                        type="number"
+                        min="0"
+                        value={item.owned || ""}
+                        onChange={(e) => {
+                          const value = parseInt(e.target.value, 10) || 0;
+                          setInventoryQuantity(item.itemName, value);
+                        }}
+                        placeholder="0"
+                        className="w-14 h-6 text-xs text-right font-medium px-1.5"
+                      />
+                    </div>
+                    <div className="grid grid-cols-4 gap-1 text-[10px]">
+                      <div>
+                        <div className="text-muted-foreground text-[9px] leading-none">
+                          Req Now
+                        </div>
+                        <div className="mt-0.5">
+                          {item.requiredNow > 0 ? (
+                            <Badge
+                              variant="default"
+                              className="font-medium text-[9px] px-0.5 py-0 h-3.5"
+                            >
+                              {formatNumber(item.requiredNow)}
+                            </Badge>
+                          ) : (
+                            <span className="text-muted-foreground text-[10px]">
+                              0
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-muted-foreground text-[9px] leading-none">
+                          Will Need
+                        </div>
+                        <div className="mt-0.5 text-[10px]">
+                          {item.willNeed > 0 ? (
+                            <span className="text-muted-foreground font-medium">
+                              {formatNumber(item.willNeed)}
+                            </span>
+                          ) : (
+                            <span className="text-muted-foreground">0</span>
+                          )}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-muted-foreground text-[9px] leading-none">
+                          Total
+                        </div>
+                        <div className="mt-0.5 font-medium text-[10px]">
+                          {formatNumber(item.totalRequired)}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-muted-foreground text-[9px] leading-none">
+                          Remaining
+                        </div>
+                        <div className="mt-0.5">{displayStatus}</div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })
+          )}
+        </div>
+
+        {/* Desktop Table View - hidden on mobile, shown on md and up */}
+        <div className="hidden md:block overflow-x-auto -mx-4 px-4">
           <Table>
             <TableHeader>
               <TableRow>
@@ -323,7 +509,14 @@ export function ItemSummaryTable() {
                     );
                   } else if (isFocused) {
                     // Focused item logic
-                    if (
+                    if (item.owned > item.totalRequired) {
+                      // Over or equal to total required (including exactly equal = "+0 over")
+                      displayStatus = (
+                        <Badge variant="secondary" className="font-medium">
+                          +{formatNumber(item.owned - item.totalRequired)} over
+                        </Badge>
+                      );
+                    } else if (
                       item.owned >= item.requiredNow &&
                       item.owned < item.totalRequired
                     ) {
@@ -331,13 +524,6 @@ export function ItemSummaryTable() {
                       displayStatus = (
                         <Badge variant="secondary" className="font-medium">
                           Complete
-                        </Badge>
-                      );
-                    } else if (item.owned >= item.totalRequired) {
-                      // Over total required
-                      displayStatus = (
-                        <Badge variant="secondary" className="font-medium">
-                          +{formatNumber(item.owned - item.totalRequired)} over
                         </Badge>
                       );
                     } else if (item.requiredNow > 0) {

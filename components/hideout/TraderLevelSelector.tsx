@@ -48,7 +48,7 @@ export function TraderLevelSelector() {
           Select your current loyalty level for each trader
         </p>
       </div>
-      <div className="flex flex-wrap gap-4 items-end">
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 xl:grid-cols-8 gap-4 items-end">
         {tradersData.traders.map((trader) => {
           const currentLevel = userState.traderLevels?.[trader.name] || 0;
 
