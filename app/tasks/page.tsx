@@ -42,7 +42,7 @@ export default async function TasksPage() {
   const tasks = await getTasks();
 
   return (
-    <div className="px-4 md:px-6">
+    <div className="px-4 md:px-6 py-6">
       <div className="mb-6">
         <h1 className="text-3xl font-bold mb-2">Task Tracker</h1>
         <p className="text-muted-foreground">

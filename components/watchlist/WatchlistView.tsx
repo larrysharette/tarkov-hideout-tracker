@@ -7,6 +7,21 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+  InputGroupButton,
+} from "@/components/ui/input-group";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import {
   Combobox,
   ComboboxContent,
   ComboboxEmpty,
@@ -21,6 +36,9 @@ import {
   IconExternalLink,
   IconTrash,
   IconPlus,
+  IconLayoutGrid,
+  IconTable,
+  IconTrashX,
 } from "@tabler/icons-react";
 import type { Item } from "@/app/api/items/route";
 
@@ -48,6 +66,7 @@ export function WatchlistView() {
   const [isLoadingItems, setIsLoadingItems] = useState(false);
   const [quickAddItem, setQuickAddItem] = useState<string>("");
   const [quickAddQuantity, setQuickAddQuantity] = useState<number>(1);
+  const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
 
   // Fetch items from API for icons
   useEffect(() => {
@@ -132,6 +151,25 @@ export function WatchlistView() {
       setQuickAddQuantity(1);
     }
   }, [quickAddItem, quickAddQuantity, addToWatchlist]);
+
+  const handleRemoveAllCompleted = useCallback(() => {
+    const completedItems = watchlistItems.filter((item) => {
+      const inventoryQuantity = userState.inventory[item.name] || 0;
+      return inventoryQuantity >= item.quantity;
+    });
+
+    completedItems.forEach((item) => {
+      removeFromWatchlist(item.name);
+    });
+  }, [watchlistItems, userState.inventory, removeFromWatchlist]);
+
+  // Calculate completed items count
+  const completedItemsCount = useMemo(() => {
+    return watchlistItems.filter((item) => {
+      const inventoryQuantity = userState.inventory[item.name] || 0;
+      return inventoryQuantity >= item.quantity;
+    }).length;
+  }, [watchlistItems, userState.inventory]);
 
   // Get item names for quick add combobox
   const itemNames = useMemo(() => {
@@ -242,43 +280,88 @@ export function WatchlistView() {
         </CardContent>
       </Card>
 
-      {/* Search */}
-      <div className="relative flex-1">
-        <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          type="text"
-          placeholder="Search items..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-9 pr-9"
-        />
-        {searchQuery && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
-            onClick={clearSearch}
-          >
-            <IconX className="h-4 w-4" />
-          </Button>
-        )}
+      {/* Search and View Toggle */}
+      <div className="flex gap-2">
+        <InputGroup className="flex-1">
+          <InputGroupAddon align="inline-start">
+            <IconSearch className="h-4 w-4" />
+          </InputGroupAddon>
+          <InputGroupInput
+            type="text"
+            placeholder="Search items..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          {searchQuery && (
+            <InputGroupAddon align="inline-end">
+              <InputGroupButton
+                variant="ghost"
+                size="icon-xs"
+                onClick={clearSearch}
+                type="button"
+              >
+                <IconX className="h-4 w-4" />
+              </InputGroupButton>
+            </InputGroupAddon>
+          )}
+        </InputGroup>
+        <ToggleGroup
+          value={[viewMode]}
+          onValueChange={(value: any) => {
+            const selectedValue = Array.isArray(value) ? value[0] : value;
+            if (selectedValue === "grid" || selectedValue === "table") {
+              setViewMode(selectedValue);
+            }
+          }}
+          variant="outline"
+          size="default"
+          spacing={0}
+        >
+          <ToggleGroupItem value="grid" aria-label="Grid view">
+            <IconLayoutGrid className="h-4 w-4" />
+          </ToggleGroupItem>
+          <ToggleGroupItem value="table" aria-label="Table view">
+            <IconTable className="h-4 w-4" />
+          </ToggleGroupItem>
+        </ToggleGroup>
       </div>
 
       {/* Summary */}
       {totalItems > 0 && (
-        <div className="flex gap-4 text-sm">
-          <div>
-            <span className="text-muted-foreground">Total Items: </span>
-            <span className="font-medium">{formatNumber(totalItems)}</span>
+        <div className="flex items-center justify-between flex-wrap gap-4">
+          <div className="flex gap-4 text-sm">
+            <div>
+              <span className="text-muted-foreground">Total Items: </span>
+              <span className="font-medium">{formatNumber(totalItems)}</span>
+            </div>
+            <div>
+              <span className="text-muted-foreground">Total Quantity: </span>
+              <span className="font-medium">{formatNumber(totalQuantity)}</span>
+            </div>
+            {completedItemsCount > 0 && (
+              <div>
+                <span className="text-muted-foreground">Completed: </span>
+                <span className="font-medium text-green-600 dark:text-green-400">
+                  {formatNumber(completedItemsCount)}
+                </span>
+              </div>
+            )}
           </div>
-          <div>
-            <span className="text-muted-foreground">Total Quantity: </span>
-            <span className="font-medium">{formatNumber(totalQuantity)}</span>
-          </div>
+          {completedItemsCount > 0 && (
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={handleRemoveAllCompleted}
+              className="gap-2"
+            >
+              <IconTrashX className="h-4 w-4" />
+              Remove All Completed
+            </Button>
+          )}
         </div>
       )}
 
-      {/* Watchlist Grid */}
+      {/* Watchlist Content */}
       {filteredItems.length === 0 ? (
         <Card>
           <CardContent className="pt-6">
@@ -301,7 +384,8 @@ export function WatchlistView() {
             </div>
           </CardContent>
         </Card>
-      ) : (
+      ) : viewMode === "grid" ? (
+        /* Grid View */
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {filteredItems.map((watchlistItem) => {
             const iconElement = watchlistItem.itemData?.iconLink ? (
@@ -422,6 +506,125 @@ export function WatchlistView() {
               </Card>
             );
           })}
+        </div>
+      ) : (
+        /* Table View */
+        <div className="overflow-x-auto -mx-4 px-4">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-12"></TableHead>
+                <TableHead>Item Name</TableHead>
+                <TableHead className="text-right">Needed</TableHead>
+                <TableHead className="text-right">Owned</TableHead>
+                <TableHead className="text-right">Remaining</TableHead>
+                <TableHead className="text-right">Quantity</TableHead>
+                <TableHead className="w-12"></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredItems.map((watchlistItem) => {
+                const iconElement = watchlistItem.itemData?.iconLink ? (
+                  <div className="shrink-0 cursor-pointer">
+                    <img
+                      src={watchlistItem.itemData.iconLink}
+                      alt={watchlistItem.name}
+                      className="w-8 h-8 object-contain"
+                    />
+                  </div>
+                ) : (
+                  <div className="shrink-0 w-8 h-8 bg-muted rounded flex items-center justify-center cursor-pointer">
+                    <span className="text-xs text-muted-foreground">?</span>
+                  </div>
+                );
+
+                const inventoryQuantity =
+                  userState.inventory[watchlistItem.name] || 0;
+                const remaining = Math.max(
+                  0,
+                  watchlistItem.quantity - inventoryQuantity
+                );
+
+                return (
+                  <TableRow key={watchlistItem.name}>
+                    <TableCell>
+                      <ItemHoverCard
+                        itemName={watchlistItem.name}
+                        itemData={watchlistItem.itemData}
+                        iconElement={iconElement}
+                      />
+                    </TableCell>
+                    <TableCell className="font-medium">
+                      <div className="flex items-center gap-2">
+                        <span className="wrap-break-word">
+                          {watchlistItem.name}
+                        </span>
+                        {watchlistItem.itemData?.wikiLink && (
+                          <a
+                            href={watchlistItem.itemData.wikiLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="shrink-0 text-muted-foreground hover:text-foreground transition-colors"
+                            title="Open wiki"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6"
+                            >
+                              <IconExternalLink className="h-3 w-3" />
+                            </Button>
+                          </a>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right font-medium">
+                      {formatNumber(watchlistItem.quantity)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {formatNumber(inventoryQuantity)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Badge
+                        variant={remaining > 0 ? "destructive" : "secondary"}
+                        className="font-medium"
+                      >
+                        {formatNumber(remaining)}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Input
+                        type="number"
+                        min="0"
+                        value={watchlistItem.quantity || ""}
+                        onChange={(e) => {
+                          const value = parseInt(e.target.value, 10) || 0;
+                          handleQuantityChange(watchlistItem.name, value);
+                        }}
+                        className="w-20 text-right font-medium"
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        variant="destructive"
+                        size="icon"
+                        className="h-8 w-8 shrink-0"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRemoveItem(watchlistItem.name);
+                        }}
+                        title="Remove from watchlist"
+                      >
+                        <IconTrash className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
         </div>
       )}
 

@@ -9,9 +9,9 @@ import { ExportDialog } from "@/components/ExportDialog";
 import { ImportDialog } from "@/components/ImportDialog";
 
 const navigationItems = [
-  { href: "/", label: "Hideout" },
-  { href: "/inventory", label: "Inventory" },
+  { href: "/hideout", label: "Hideout" },
   { href: "/tasks", label: "Tasks" },
+  { href: "/inventory", label: "Inventory" },
   { href: "/watchlist", label: "Watchlist" },
 ];
 
