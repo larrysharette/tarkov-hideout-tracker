@@ -29,14 +29,14 @@ import {
 } from "@/components/ui/combobox";
 import { RecordRaidDialog } from "@/components/hideout/RecordRaidDialog";
 import {
-  IconSearch,
-  IconX,
   IconExternalLink,
   IconTrash,
   IconPlus,
   IconEye,
   IconEyeOff,
 } from "@tabler/icons-react";
+import { useFuzzySearch } from "@/hooks/use-fuzzy-search";
+import { SearchInput } from "@/components/ui/search-input";
 import type { Item } from "@/app/api/items/route";
 
 function formatNumber(num: number): string {
@@ -82,7 +82,6 @@ export function InventoryView() {
     removeFromWatchlist,
     isInWatchlist,
   } = useHideout();
-  const [searchQuery, setSearchQuery] = useState("");
   const [items, setItems] = useState<Item[]>([]);
   const [isLoadingItems, setIsLoadingItems] = useState(false);
   const [filterType, setFilterType] = useState<FilterType>("all");
@@ -146,9 +145,26 @@ export function InventoryView() {
       });
   }, [userState.inventory, itemsMap]);
 
+  // Fuzzy search for inventory items
+  const {
+    results: fuzzySearchResults,
+    query: searchQuery,
+    setQuery: setSearchQuery,
+  } = useFuzzySearch(inventoryItems, {
+    keys: [{ name: "name", weight: 1 }],
+    minMatchCharLength: 2,
+  });
+
+  // Convert fuzzy search results back to InventoryItem[]
+  const fuzzySearchItems = useMemo(() => {
+    if (!searchQuery.trim()) return inventoryItems;
+    return fuzzySearchResults as unknown as InventoryItem[];
+  }, [searchQuery, fuzzySearchResults, inventoryItems]);
+
   // Filter inventory items by search query and filter type
   const filteredItems = useMemo(() => {
-    let items = inventoryItems;
+    // Start with fuzzy search results if searching, otherwise use all items
+    let items = searchQuery.trim() ? fuzzySearchItems : inventoryItems;
 
     // Apply filter type
     switch (filterType) {
@@ -183,14 +199,8 @@ export function InventoryView() {
         break;
     }
 
-    // Apply search query
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      items = items.filter((item) => item.name.toLowerCase().includes(query));
-    }
-
     return items;
-  }, [inventoryItems, searchQuery, filterType]);
+  }, [inventoryItems, fuzzySearchItems, searchQuery, filterType]);
 
   const handleQuantityChange = useCallback(
     (itemName: string, newQuantity: number) => {
@@ -205,10 +215,6 @@ export function InventoryView() {
     },
     [setInventoryQuantity]
   );
-
-  const clearSearch = useCallback(() => {
-    setSearchQuery("");
-  }, []);
 
   const handleQuickAdd = useCallback(() => {
     if (quickAddItem) {
@@ -427,25 +433,12 @@ export function InventoryView() {
 
       {/* Search and Filter */}
       <div className="flex flex-col md:flex-row gap-2">
-        <div className="relative flex-1">
-          <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            type="text"
-            placeholder="Search items..."
+        <div className="flex-1">
+          <SearchInput
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9 pr-9"
+            onValueChange={setSearchQuery}
+            placeholder="Search items..."
           />
-          {searchQuery && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
-              onClick={clearSearch}
-            >
-              <IconX className="h-4 w-4" />
-            </Button>
-          )}
         </div>
         <Select
           value={filterType}

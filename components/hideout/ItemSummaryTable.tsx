@@ -31,6 +31,8 @@ import { cn } from "@/lib/utils";
 import type { ItemSummary } from "@/lib/types/hideout";
 import { RecordRaidDialog } from "./RecordRaidDialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useFuzzySearch } from "@/hooks/use-fuzzy-search";
+import { SearchInput } from "@/components/ui/search-input";
 
 type SortField = keyof ItemSummary;
 type SortDirection = "asc" | "desc" | null;
@@ -60,13 +62,28 @@ export function ItemSummaryTable() {
     removeFromWatchlist,
     isInWatchlist,
   } = useHideout();
-  const [searchQuery, setSearchQuery] = useState("");
   const [sortField, setSortField] = useState<SortField | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>(null);
   const [filterType, setFilterType] = useState<FilterType>("all");
   const [showAvailableOnly, setShowAvailableOnly] = useState(false);
 
   const itemSummary = getItemSummary();
+
+  // Fuzzy search for item summary
+  const {
+    results: fuzzySearchResults,
+    query: searchQuery,
+    setQuery: setSearchQuery,
+  } = useFuzzySearch(itemSummary, {
+    keys: [{ name: "itemName", weight: 1 }],
+    minMatchCharLength: 2,
+  });
+
+  // Convert fuzzy search results back to ItemSummary[]
+  const fuzzySearchSummary = useMemo(() => {
+    if (!searchQuery.trim()) return itemSummary;
+    return fuzzySearchResults as unknown as ItemSummary[];
+  }, [searchQuery, fuzzySearchResults, itemSummary]);
 
   const handleSort = useCallback(
     (field: SortField) => {
@@ -88,15 +105,8 @@ export function ItemSummaryTable() {
   );
 
   const filteredSummary = useMemo(() => {
-    let items = itemSummary;
-
-    // Apply search filter
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      items = items.filter((item) =>
-        item.itemName.toLowerCase().includes(query)
-      );
-    }
+    // Start with fuzzy search results if searching, otherwise use all items
+    let items = searchQuery.trim() ? fuzzySearchSummary : itemSummary;
 
     // Apply sorting
     if (sortField && sortDirection) {
@@ -112,7 +122,7 @@ export function ItemSummaryTable() {
     }
 
     return items;
-  }, [itemSummary, searchQuery, sortField, sortDirection]);
+  }, [itemSummary, fuzzySearchSummary, searchQuery, sortField, sortDirection]);
 
   // Get items required by available upgrades
   const availableItemNames = useMemo(() => {
@@ -229,11 +239,10 @@ export function ItemSummaryTable() {
       </div>
       <div className="space-y-4">
         <div className="flex flex-col md:flex-row gap-2 md:items-center">
-          <Input
-            type="text"
-            placeholder="Search items..."
+          <SearchInput
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onValueChange={setSearchQuery}
+            placeholder="Search items..."
             className="flex-1"
           />
           <div className="flex gap-2">

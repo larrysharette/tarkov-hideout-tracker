@@ -8,6 +8,17 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ExportDialog } from "@/components/ExportDialog";
 import { ImportDialog } from "@/components/ImportDialog";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerFooter,
+  DrawerTrigger,
+  DrawerClose,
+} from "@/components/ui/drawer";
+import { IconMenu } from "@tabler/icons-react";
+import { Separator } from "@/components/ui/separator";
 
 const navigationItems = [
   { href: "/hideout", label: "Hideout" },
@@ -23,6 +34,7 @@ export function Navigation() {
   const pathname = usePathname();
   const [exportOpen, setExportOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<string>("");
 
   useEffect(() => {
@@ -42,14 +54,101 @@ export function Navigation() {
     <>
       <nav className="border-b border-border bg-background">
         <div className="container mx-auto px-4 md:px-6 max-w-7xl">
-          <div className="flex h-14 items-center gap-1">
+          <div className="flex h-14 items-center gap-2">
+            {/* Mobile menu drawer */}
+            <Drawer
+              open={mobileMenuOpen}
+              onOpenChange={setMobileMenuOpen}
+              direction="left"
+            >
+              <DrawerTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="md:hidden p-2"
+                  aria-label="Open menu"
+                >
+                  <IconMenu className="h-5 w-5" />
+                </Button>
+              </DrawerTrigger>
+              <DrawerContent className="h-full w-3/4 sm:max-w-sm">
+                <DrawerHeader>
+                  <DrawerTitle>Menu</DrawerTitle>
+                </DrawerHeader>
+                <div className="flex flex-col gap-1 px-4 flex-1 overflow-y-auto">
+                  <nav className="flex flex-col gap-1">
+                    {navigationItems.map((item) => {
+                      const isActive = pathname === item.href;
+                      return (
+                        <DrawerClose key={item.href} asChild>
+                          <Link
+                            href={item.href}
+                            className={cn(
+                              "px-4 py-3 text-base font-medium rounded-md transition-colors",
+                              isActive
+                                ? "bg-muted text-foreground"
+                                : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                            )}
+                          >
+                            {item.label}
+                          </Link>
+                        </DrawerClose>
+                      );
+                    })}
+                    <Separator className="my-2" />
+                    <DrawerClose asChild>
+                      <Link
+                        href="/changelog"
+                        className="px-4 py-3 text-base font-medium rounded-md transition-colors text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                      >
+                        Changelog
+                      </Link>
+                    </DrawerClose>
+                  </nav>
+                </div>
+                <DrawerFooter className="gap-2">
+                  <div className="flex flex-col gap-2">
+                    <Button
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        setImportOpen(true);
+                      }}
+                      variant="outline"
+                      className="w-full"
+                    >
+                      Import
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        setExportOpen(true);
+                      }}
+                      variant="outline"
+                      className="w-full"
+                    >
+                      Export
+                    </Button>
+                  </div>
+                  {lastUpdated && (
+                    <div className="text-xs text-muted-foreground text-center pt-2">
+                      v{APP_VERSION} • Updated {lastUpdated}
+                    </div>
+                  )}
+                </DrawerFooter>
+              </DrawerContent>
+            </Drawer>
+
+            {/* Logo/Title */}
             <Link
               href="/"
-              className="mr-6 text-lg font-semibold text-foreground hover:text-foreground/80 transition-colors"
+              className="text-base md:text-lg font-semibold text-foreground hover:text-foreground/80 transition-colors truncate"
             >
-              Adin's Tarkov Tracker
+              <span className="hidden sm:inline">Adin's Tarkov Tracker</span>
+              <span className="sm:hidden">Adin's Tarkov Tracker</span>
             </Link>
-            <div className="flex items-center gap-1 flex-1">
+
+            {/* Desktop Navigation */}
+            <div className="hidden md:flex items-center gap-1 flex-1">
               {navigationItems.map((item) => {
                 const isActive = pathname === item.href;
                 return (
@@ -68,31 +167,43 @@ export function Navigation() {
                 );
               })}
             </div>
-            <Link href="/changelog" className="flex items-center gap-4 ml-auto">
-              <span className="text-xs text-muted-foreground hidden md:inline">
-                v{APP_VERSION}
-                {lastUpdated && ` • Updated ${lastUpdated}`}
-              </span>
-              <div className="flex items-center gap-2">
+
+            {/* Right side actions */}
+            <div className="flex items-center gap-2 ml-auto">
+              {/* Version info - desktop only */}
+              <Link href="/changelog" className="hidden lg:flex items-center">
+                <span className="text-xs text-muted-foreground">
+                  v{APP_VERSION}
+                  {lastUpdated && ` • Updated ${lastUpdated}`}
+                </span>
+              </Link>
+
+              {/* Import/Export buttons */}
+              <div className="md:flex items-center gap-1 md:gap-2 hidden">
                 <Button
                   onClick={() => setImportOpen(true)}
                   variant="outline"
                   size="sm"
+                  className="text-xs md:text-sm px-2 md:px-3"
                 >
-                  Import
+                  <span className="hidden sm:inline">Import</span>
+                  <span className="sm:hidden">Imp</span>
                 </Button>
                 <Button
                   onClick={() => setExportOpen(true)}
                   variant="outline"
                   size="sm"
+                  className="text-xs md:text-sm px-2 md:px-3"
                 >
-                  Export
+                  <span className="hidden sm:inline">Export</span>
+                  <span className="sm:hidden">Exp</span>
                 </Button>
               </div>
-            </Link>
+            </div>
           </div>
         </div>
       </nav>
+
       <ExportDialog open={exportOpen} onOpenChange={setExportOpen} />
       <ImportDialog open={importOpen} onOpenChange={setImportOpen} />
     </>

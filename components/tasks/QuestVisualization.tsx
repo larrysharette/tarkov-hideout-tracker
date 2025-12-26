@@ -12,10 +12,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
+import { useFuzzySearch } from "@/hooks/use-fuzzy-search";
+import {
+  Menubar,
+  MenubarMenu,
+  MenubarTrigger,
+  MenubarContent,
+  MenubarRadioGroup,
+  MenubarRadioItem,
+  MenubarCheckboxItem,
+} from "@/components/ui/menubar";
 import { useQuest } from "@/contexts/QuestContext";
 import { QuestCard } from "./QuestCard";
 import { QuestDialog } from "./QuestDialog";
+import { SearchInput } from "../ui/search-input";
 
 interface QuestVisualizationProps {
   tasks: Task[];
@@ -32,11 +42,25 @@ type QuestFilter = {
 export default function QuestVisualization({ tasks }: QuestVisualizationProps) {
   const { isQuestCompleted } = useQuest();
   const [selectedQuest, setSelectedQuest] = useState<Task | null>(null);
-  const [filter, setFilter] = useState<QuestFilter>({
+  const [filter, setFilter] = useState<Omit<QuestFilter, "searchQuery">>({
     kappaOnly: false,
     status: "all",
     mapId: null,
-    searchQuery: "",
+  });
+
+  // Fuzzy search using the searchable tasks
+  const {
+    results: fuzzySearchTasks,
+    query: searchQuery,
+    setQuery: setSearchQuery,
+  } = useFuzzySearch(tasks, {
+    keys: [
+      { name: "name", weight: 1 },
+      { name: "trader", weight: 1 },
+      { name: "map", weight: 1 },
+      { name: "objectives", weight: 1 },
+    ],
+    minMatchCharLength: 2,
   });
 
   // Get all unique traders with their image links
@@ -100,45 +124,39 @@ export default function QuestVisualization({ tasks }: QuestVisualizationProps) {
     [isQuestCompleted]
   );
 
-  // Filter tasks based on current filters
+  // Filter tasks based on current filters (applied after fuzzy search)
   const filteredTasks = useMemo(() => {
-    let filtered = tasks;
-
-    // Search filter
-    if (filter.searchQuery.trim()) {
-      const query = filter.searchQuery.toLowerCase().trim();
-      filtered = filtered.filter(
-        (t) =>
-          t.name.toLowerCase().includes(query) ||
-          t.trader?.name.toLowerCase().includes(query) ||
-          t.map?.name.toLowerCase().includes(query) ||
-          t.objectives.some((obj) =>
-            obj.description.toLowerCase().includes(query)
-          )
-      );
-    }
+    // Start with fuzzy search results if searching, otherwise use all tasks
+    let filtered = searchQuery.trim() ? fuzzySearchTasks : tasks;
 
     // Kappa filter
     if (filter.kappaOnly) {
-      filtered = filtered.filter((t) => t.kappaRequired);
+      filtered = filtered.filter((t: Task) => t.kappaRequired);
     }
 
     // Status filter
     if (filter.status === "completed") {
-      filtered = filtered.filter((t) => isQuestCompleted(t.id));
+      filtered = filtered.filter((t: Task) => isQuestCompleted(t.id));
     } else if (filter.status === "uncompleted") {
-      filtered = filtered.filter((t) => !isQuestCompleted(t.id));
+      filtered = filtered.filter((t: Task) => !isQuestCompleted(t.id));
     } else if (filter.status === "locked") {
-      filtered = filtered.filter((t) => isQuestLocked(t));
+      filtered = filtered.filter((t: Task) => isQuestLocked(t));
     }
 
     // Map filter
     if (filter.mapId) {
-      filtered = filtered.filter((t) => t.map?.id === filter.mapId);
+      filtered = filtered.filter((t: Task) => t.map?.id === filter.mapId);
     }
 
     return filtered;
-  }, [tasks, filter, isQuestCompleted, isQuestLocked]);
+  }, [
+    searchQuery,
+    fuzzySearchTasks,
+    tasks,
+    filter,
+    isQuestCompleted,
+    isQuestLocked,
+  ]);
 
   // Get quests for a specific trader and level
   const getQuestsForCell = useCallback(
@@ -152,25 +170,122 @@ export default function QuestVisualization({ tasks }: QuestVisualizationProps) {
     [filteredTasks]
   );
 
+  // Helper function to get status label
+  const getStatusLabel = (status: QuestStatus): string => {
+    switch (status) {
+      case "all":
+        return "All Quests";
+      case "uncompleted":
+        return "Uncompleted";
+      case "completed":
+        return "Completed";
+      case "locked":
+        return "Locked";
+      default:
+        return "All Quests";
+    }
+  };
+
+  // Helper function to get map label
+  const getMapLabel = (mapId: string | null): string => {
+    if (!mapId) return "All Maps";
+    const map = maps.find(([id]) => id === mapId);
+    return map ? map[1] : "All Maps";
+  };
+
   return (
     <div className="w-full">
       {/* Filters */}
-      <Card className="p-4">
+      {/* Mobile Filters - Menubar */}
+      <div className="md:hidden mb-4 space-y-3">
+        {/* Search Filter */}
+        <div>
+          <Label htmlFor="search-mobile" className="mb-2 block text-sm">
+            Search Quests
+          </Label>
+          <SearchInput
+            value={searchQuery}
+            onValueChange={setSearchQuery}
+            placeholder="Search by name, trader, map, or objective..."
+            showClearButton
+          />
+        </div>
+
+        {/* Menubar Filters */}
+        <Menubar className="w-full justify-start">
+          <MenubarMenu>
+            <MenubarTrigger className="text-xs">
+              Status: {getStatusLabel(filter.status)}
+            </MenubarTrigger>
+            <MenubarContent>
+              <MenubarRadioGroup
+                value={filter.status}
+                onValueChange={(value: QuestStatus) =>
+                  setFilter((prev) => ({ ...prev, status: value }))
+                }
+              >
+                <MenubarRadioItem value="all">All Quests</MenubarRadioItem>
+                <MenubarRadioItem value="uncompleted">
+                  Uncompleted
+                </MenubarRadioItem>
+                <MenubarRadioItem value="completed">Completed</MenubarRadioItem>
+                <MenubarRadioItem value="locked">Locked</MenubarRadioItem>
+              </MenubarRadioGroup>
+            </MenubarContent>
+          </MenubarMenu>
+
+          <MenubarMenu>
+            <MenubarTrigger className="text-xs">
+              Map: {getMapLabel(filter.mapId)}
+            </MenubarTrigger>
+            <MenubarContent>
+              <MenubarRadioGroup
+                value={filter.mapId || "all"}
+                onValueChange={(value) =>
+                  setFilter((prev) => ({
+                    ...prev,
+                    mapId: value === "all" ? null : value,
+                  }))
+                }
+              >
+                <MenubarRadioItem value="all">All Maps</MenubarRadioItem>
+                {maps.map(([id, name]) => (
+                  <MenubarRadioItem key={id} value={id}>
+                    {name}
+                  </MenubarRadioItem>
+                ))}
+              </MenubarRadioGroup>
+            </MenubarContent>
+          </MenubarMenu>
+
+          <MenubarMenu>
+            <MenubarTrigger className="text-xs">Kappa</MenubarTrigger>
+            <MenubarContent>
+              <MenubarCheckboxItem
+                checked={filter.kappaOnly}
+                onCheckedChange={(checked) =>
+                  setFilter((prev) => ({ ...prev, kappaOnly: checked }))
+                }
+              >
+                Kappa Required Only
+              </MenubarCheckboxItem>
+            </MenubarContent>
+          </MenubarMenu>
+        </Menubar>
+      </div>
+
+      {/* Desktop Filters - Card */}
+      <Card className="hidden md:block p-4">
         <div className="flex flex-col md:flex-row gap-4 items-end">
           {/* Search Filter */}
           <div className="flex-1 w-full md:w-auto">
             <Label htmlFor="search" className="mb-2 block">
               Search Quests
             </Label>
-            <Input
-              id="search"
-              type="text"
+            <SearchInput
+              value={searchQuery}
+              onValueChange={setSearchQuery}
               placeholder="Search by name, trader, map, or objective..."
-              value={filter.searchQuery}
-              onChange={(e) =>
-                setFilter((prev) => ({ ...prev, searchQuery: e.target.value }))
-              }
-              className="w-full"
             />
           </div>
 
@@ -247,74 +362,112 @@ export default function QuestVisualization({ tasks }: QuestVisualizationProps) {
         </div>
       </Card>
 
-      {/* Grid */}
-      <div className="overflow-x-auto overflow-y-auto max-h-[calc(100vh-250px)]">
-        <div className="inline-block min-w-full">
-          <table className="w-full border-collapse">
-            <thead className="sticky top-0 z-20">
-              <tr>
-                <th className="border border-border p-2 bg-muted/50 sticky left-0 z-30">
-                  Level / Trader
-                </th>
-                {traders.map((trader) => (
-                  <th
-                    key={trader.name}
-                    className="border border-border p-2 bg-muted/50 min-w-[200px]"
-                  >
-                    <div className="flex flex-col items-center gap-2">
-                      {trader.imageLink && (
-                        <img
-                          src={trader.imageLink}
-                          alt={trader.name}
-                          className="w-8 h-8 object-contain"
-                        />
-                      )}
-                      <span className="text-sm font-medium">{trader.name}</span>
-                    </div>
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {levels.map((level) => (
-                <tr key={level}>
-                  <td className="border border-border p-2 bg-muted/50 sticky left-0 z-10 font-semibold">
-                    {level === 0 ? "No Level" : `Level ${level}`}
-                  </td>
-                  {traders.map((trader) => {
-                    const cellQuests = getQuestsForCell(trader.name, level);
-                    return (
-                      <td
-                        key={`${trader.name}-${level}`}
-                        className="border border-border p-2 align-top"
-                      >
-                        <div className="space-y-2">
-                          {cellQuests.map((quest) => {
-                            const isLocked = isQuestLocked(quest);
-                            return (
-                              <QuestCard
-                                key={quest.id}
-                                quest={quest}
-                                isLocked={isLocked}
-                                onClick={() => setSelectedQuest(quest)}
-                              />
-                            );
-                          })}
-                          {cellQuests.length === 0 && (
-                            <div className="text-xs text-muted-foreground text-center py-4">
-                              —
-                            </div>
-                          )}
-                        </div>
-                      </td>
-                    );
-                  })}
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      {/* Search Results Grid - Show when searching */}
+      {searchQuery.trim() ? (
+        <div className="mt-4">
+          <div className="mb-4">
+            <p className="text-sm text-muted-foreground">
+              Found {filteredTasks.length} quest
+              {filteredTasks.length !== 1 ? "s" : ""}
+            </p>
+          </div>
+          {filteredTasks.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+              {filteredTasks.map((quest: Task) => {
+                const isLocked = isQuestLocked(quest);
+                return (
+                  <QuestCard
+                    key={quest.id}
+                    quest={quest}
+                    isLocked={isLocked}
+                    onClick={() => setSelectedQuest(quest)}
+                  />
+                );
+              })}
+            </div>
+          ) : (
+            <div className="flex items-center justify-center h-[400px] bg-card border border-border rounded-lg">
+              <div className="text-center">
+                <p className="text-muted-foreground mb-2">No quests found</p>
+                <p className="text-sm text-muted-foreground">
+                  Try adjusting your search or filters
+                </p>
+              </div>
+            </div>
+          )}
         </div>
-      </div>
+      ) : (
+        /* Grid Table - Show when not searching */
+        <div className="overflow-x-auto overflow-y-auto max-h-[calc(100vh-250px)]">
+          <div className="inline-block min-w-full">
+            <table className="w-full border-collapse">
+              <thead className="sticky top-0 z-20">
+                <tr>
+                  <th className="border border-border p-2 bg-muted/50 sticky left-0 z-30">
+                    Level / Trader
+                  </th>
+                  {traders.map((trader) => (
+                    <th
+                      key={trader.name}
+                      className="border border-border p-2 bg-muted/50 min-w-[200px]"
+                    >
+                      <div className="flex flex-col items-center gap-2">
+                        {trader.imageLink && (
+                          <img
+                            src={trader.imageLink}
+                            alt={trader.name}
+                            className="w-8 h-8 object-contain"
+                          />
+                        )}
+                        <span className="text-sm font-medium">
+                          {trader.name}
+                        </span>
+                      </div>
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {levels.map((level) => (
+                  <tr key={level}>
+                    <td className="border border-border p-2 bg-muted/50 sticky left-0 z-10 font-semibold">
+                      {level === 0 ? "No Level" : `Level ${level}`}
+                    </td>
+                    {traders.map((trader) => {
+                      const cellQuests = getQuestsForCell(trader.name, level);
+                      return (
+                        <td
+                          key={`${trader.name}-${level}`}
+                          className="border border-border p-2 align-top"
+                        >
+                          <div className="space-y-2">
+                            {cellQuests.map((quest) => {
+                              const isLocked = isQuestLocked(quest);
+                              return (
+                                <QuestCard
+                                  key={quest.id}
+                                  quest={quest}
+                                  isLocked={isLocked}
+                                  onClick={() => setSelectedQuest(quest)}
+                                />
+                              );
+                            })}
+                            {cellQuests.length === 0 && (
+                              <div className="text-xs text-muted-foreground text-center py-4">
+                                —
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {/* Quest Info Dialog */}
       <QuestDialog

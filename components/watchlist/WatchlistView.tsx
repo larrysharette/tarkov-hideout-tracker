@@ -14,12 +14,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupInput,
-  InputGroupButton,
-} from "@/components/ui/input-group";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
   Combobox,
@@ -31,8 +25,6 @@ import {
 } from "@/components/ui/combobox";
 import { ItemHoverCard } from "@/components/ui/item-hover-card";
 import {
-  IconSearch,
-  IconX,
   IconExternalLink,
   IconTrash,
   IconPlus,
@@ -40,6 +32,8 @@ import {
   IconTable,
   IconTrashX,
 } from "@tabler/icons-react";
+import { useFuzzySearch } from "@/hooks/use-fuzzy-search";
+import { SearchInput } from "@/components/ui/search-input";
 import type { Item } from "@/app/api/items/route";
 
 function formatNumber(num: number): string {
@@ -61,7 +55,6 @@ export function WatchlistView() {
     setWatchlistQuantity,
     removeFromWatchlist,
   } = useHideout();
-  const [searchQuery, setSearchQuery] = useState("");
   const [items, setItems] = useState<Item[]>([]);
   const [isLoadingItems, setIsLoadingItems] = useState(false);
   const [quickAddItem, setQuickAddItem] = useState<string>("");
@@ -113,18 +106,27 @@ export function WatchlistView() {
       });
   }, [userState.watchlist, itemsMap]);
 
+  // Fuzzy search for watchlist items
+  const {
+    results: fuzzySearchResults,
+    query: searchQuery,
+    setQuery: setSearchQuery,
+  } = useFuzzySearch(watchlistItems, {
+    keys: [{ name: "name", weight: 1 }],
+    minMatchCharLength: 2,
+  });
+
+  // Convert fuzzy search results back to WatchlistItem[]
+  const fuzzySearchItems = useMemo(() => {
+    if (!searchQuery.trim()) return watchlistItems;
+    return fuzzySearchResults as unknown as WatchlistItem[];
+  }, [searchQuery, fuzzySearchResults, watchlistItems]);
+
   // Filter watchlist items by search query
   const filteredItems = useMemo(() => {
-    let items = watchlistItems;
-
-    // Apply search query
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      items = items.filter((item) => item.name.toLowerCase().includes(query));
-    }
-
-    return items;
-  }, [watchlistItems, searchQuery]);
+    // Start with fuzzy search results if searching, otherwise use all items
+    return searchQuery.trim() ? fuzzySearchItems : watchlistItems;
+  }, [watchlistItems, fuzzySearchItems, searchQuery]);
 
   const handleQuantityChange = useCallback(
     (itemName: string, newQuantity: number) => {
@@ -139,10 +141,6 @@ export function WatchlistView() {
     },
     [removeFromWatchlist]
   );
-
-  const clearSearch = useCallback(() => {
-    setSearchQuery("");
-  }, []);
 
   const handleQuickAdd = useCallback(() => {
     if (quickAddItem) {
@@ -282,29 +280,12 @@ export function WatchlistView() {
 
       {/* Search and View Toggle */}
       <div className="flex gap-2">
-        <InputGroup className="flex-1">
-          <InputGroupAddon align="inline-start">
-            <IconSearch className="h-4 w-4" />
-          </InputGroupAddon>
-          <InputGroupInput
-            type="text"
-            placeholder="Search items..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-          {searchQuery && (
-            <InputGroupAddon align="inline-end">
-              <InputGroupButton
-                variant="ghost"
-                size="icon-xs"
-                onClick={clearSearch}
-                type="button"
-              >
-                <IconX className="h-4 w-4" />
-              </InputGroupButton>
-            </InputGroupAddon>
-          )}
-        </InputGroup>
+        <SearchInput
+          value={searchQuery}
+          onValueChange={setSearchQuery}
+          placeholder="Search items..."
+          className="flex-1"
+        />
         <ToggleGroup
           value={[viewMode]}
           onValueChange={(value: any) => {

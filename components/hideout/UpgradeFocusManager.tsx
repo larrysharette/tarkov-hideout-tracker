@@ -3,10 +3,11 @@
 import { useMemo, useState } from "react";
 import { useHideout } from "@/contexts/HideoutContext";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { UpgradeCard } from "./UpgradeCard";
 import { getUpgradeKey } from "@/lib/utils/hideout-data";
 import { isUpgradeAvailable } from "@/lib/utils/hideout-calculations";
+import { useFuzzySearch } from "@/hooks/use-fuzzy-search";
+import { SearchInput } from "@/components/ui/search-input";
 
 export function UpgradeFocusManager() {
   const {
@@ -20,7 +21,6 @@ export function UpgradeFocusManager() {
     purchaseUpgrade,
   } = useHideout();
 
-  const [searchQuery, setSearchQuery] = useState("");
   const [showAvailableOnly, setShowAvailableOnly] = useState(false);
 
   const availableUpgrades = useMemo(() => {
@@ -46,21 +46,37 @@ export function UpgradeFocusManager() {
     });
   }, [hideoutData, userState.stationLevels]);
 
-  const displayedUpgrades = useMemo(() => {
-    let upgrades = showAvailableOnly ? availableUpgrades : allUpgrades;
+  // Fuzzy search for upgrades
+  const {
+    results: fuzzySearchResults,
+    query: searchQuery,
+    setQuery: setSearchQuery,
+  } = useFuzzySearch(allUpgrades, {
+    keys: [
+      { name: "stationName", weight: 1 },
+      { name: "level", weight: 1 },
+    ],
+    minMatchCharLength: 2,
+  });
 
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      upgrades = upgrades.filter(
-        (upgrade) =>
-          upgrade.stationName.toLowerCase().includes(query) ||
-          upgrade.level.toString().includes(query)
-      );
+  // Convert fuzzy search results back to upgrade array
+  const fuzzySearchUpgrades = useMemo(() => {
+    if (!searchQuery.trim()) {
+      return showAvailableOnly ? availableUpgrades : allUpgrades;
     }
+    return fuzzySearchResults as unknown as typeof allUpgrades;
+  }, [
+    searchQuery,
+    fuzzySearchResults,
+    showAvailableOnly,
+    availableUpgrades,
+    allUpgrades,
+  ]);
 
+  const displayedUpgrades = useMemo(() => {
     // Group by station
-    const grouped = new Map<string, typeof upgrades>();
-    for (const upgrade of upgrades) {
+    const grouped = new Map<string, typeof fuzzySearchUpgrades>();
+    for (const upgrade of fuzzySearchUpgrades) {
       if (!grouped.has(upgrade.stationId)) {
         grouped.set(upgrade.stationId, []);
       }
@@ -73,7 +89,7 @@ export function UpgradeFocusManager() {
     }
 
     return grouped;
-  }, [allUpgrades, availableUpgrades, showAvailableOnly, searchQuery]);
+  }, [fuzzySearchUpgrades]);
 
   const focusedCount = userState.focusedUpgrades.length;
 
@@ -113,11 +129,10 @@ export function UpgradeFocusManager() {
       </div>
       <div className="space-y-4">
         <div className="flex items-center gap-2">
-          <Input
-            type="text"
-            placeholder="Search upgrades..."
+          <SearchInput
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onValueChange={setSearchQuery}
+            placeholder="Search upgrades..."
             className="flex-1"
           />
           <Button

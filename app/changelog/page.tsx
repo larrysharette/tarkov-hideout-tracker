@@ -18,8 +18,21 @@ interface ChangelogEntry {
 
 const changelogEntries: ChangelogEntry[] = [
   {
-    version: "0.1.0",
+    version: "0.1.1",
     date: "2025-12-27",
+    changes: [
+      "Added mobile navigation drawer for better mobile experience",
+      "Added fuzzy search functionality with SearchInput component",
+      "Added debounce hook for optimized search performance",
+      "Enhanced quest visualization with search and filtering capabilities",
+      "Improved inventory, watchlist, and hideout views with search integration",
+      "Added drawer UI component for mobile-friendly interactions",
+      "Added on click to the item icons to open the item info panel for better mobile experience",
+    ],
+  },
+  {
+    version: "0.1.0",
+    date: "2025-12-26",
     changes: [
       "Initial release",
       "Hideout upgrade tracking",
@@ -43,7 +56,7 @@ export default function ChangelogPage() {
 
       <div className="space-y-4 max-w-4xl">
         {changelogEntries.map((entry) => (
-          <Card key={entry.version} className="p-6">
+          <Card key={entry.version} className="p-6 w-full">
             <div className="flex items-center gap-4 mb-4">
               <h2 className="text-xl font-semibold">v{entry.version}</h2>
               <span className="text-sm text-muted-foreground">
