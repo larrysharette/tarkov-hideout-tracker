@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/drawer";
 import { IconMenu } from "@tabler/icons-react";
 import { Separator } from "@/components/ui/separator";
+import { APP_VERSION, BUILD_DATE } from "@/changelog-data";
 
 const navigationItems = [
   { href: "/hideout", label: "Hideout" },
@@ -26,9 +27,6 @@ const navigationItems = [
   { href: "/inventory", label: "Inventory" },
   { href: "/watchlist", label: "Watchlist" },
 ];
-
-const APP_VERSION = "0.1.0";
-const BUILD_DATE = process.env.NEXT_PUBLIC_BUILD_DATE || "";
 
 export function Navigation() {
   const pathname = usePathname();
