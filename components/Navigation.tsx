@@ -132,6 +132,14 @@ export function Navigation() {
                       v{APP_VERSION} • Updated {lastUpdated}
                     </div>
                   )}
+                  <a
+                    href="https://tarkov.dev/api/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-muted-foreground text-center hover:text-foreground transition-colors"
+                  >
+                    Data by tarkov.dev
+                  </a>
                 </DrawerFooter>
               </DrawerContent>
             </Drawer>
@@ -169,12 +177,22 @@ export function Navigation() {
             {/* Right side actions */}
             <div className="flex items-center gap-2 ml-auto">
               {/* Version info - desktop only */}
-              <Link href="/changelog" className="hidden lg:flex items-center">
-                <span className="text-xs text-muted-foreground">
-                  v{APP_VERSION}
-                  {lastUpdated && ` • Updated ${lastUpdated}`}
-                </span>
-              </Link>
+              <div className="hidden lg:flex items-center gap-2">
+                <Link href="/changelog">
+                  <span className="text-xs text-muted-foreground">
+                    v{APP_VERSION}
+                    {lastUpdated && ` • Updated ${lastUpdated}`}
+                  </span>
+                </Link>
+                <a
+                  href="https://tarkov.dev/api/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Data by tarkov.dev
+                </a>
+              </div>
 
               {/* Import/Export buttons */}
               <div className="md:flex items-center gap-1 md:gap-2 hidden">
