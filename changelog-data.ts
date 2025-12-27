@@ -9,10 +9,12 @@ export const changelogEntries: ChangelogEntry[] = [
     version: "0.1.2",
     date: "2025-12-28",
     changes: [
-      "Added Lightkeeper requirement support for quests",
+      "Added Lightkeeper requirement support for tasks",
       "Enhanced quest filtering with requirement filter (All/Kappa/Lightkeeper)",
-      "Added 'Mark Prerequisites Complete' button to bulk mark prerequisite quests as completed",
-      "Improved quest visualization to hide empty level rows",
+      "Added 'Mark Prerequisites Complete' button to bulk mark prerequisite tasks as completed",
+      "Improved task visualization to hide empty level rows",
+      "Added player level input to the task visualization",
+      "Added a filter to only show tasks that meet the player level requirement",
     ],
   },
   {

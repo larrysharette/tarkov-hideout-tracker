@@ -38,6 +38,7 @@ const defaultUserState: UserHideoutState = {
   traderLevels: {},
   completedQuests: [],
   watchlist: {},
+  playerLevel: 1,
 };
 
 const HideoutContext = createContext<HideoutContextValue | null>(null);
@@ -207,6 +208,13 @@ export function HideoutProvider({ children }: { children: React.ReactNode }) {
     }));
   }, []);
 
+  const setPlayerLevel = useCallback((level: number) => {
+    setUserState((prev) => ({
+      ...prev,
+      playerLevel: level,
+    }));
+  }, []);
+
   const purchaseUpgrade = useCallback((upgrade: StationLevel) => {
     setUserState((prev) => {
       // Update station level
@@ -348,6 +356,7 @@ export function HideoutProvider({ children }: { children: React.ReactNode }) {
     resetInventory,
     resetHideoutLevels,
     setTraderLevel,
+    setPlayerLevel,
     purchaseUpgrade,
     toggleQuestCompletion,
     markQuestsAsCompleted,
