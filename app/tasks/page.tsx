@@ -1,4 +1,5 @@
 import QuestVisualization from "@/components/tasks/QuestVisualization";
+import { QuestHeader } from "@/components/tasks/QuestHeader";
 import type { Task } from "@/lib/types/tasks";
 import type { Metadata } from "next";
 import { headers } from "next/headers";
@@ -43,16 +44,10 @@ export default async function TasksPage() {
 
   return (
     <div className="px-4 md:px-6 py-6">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold mb-2">Task Tracker</h1>
-        <p className="text-muted-foreground">
-          Browse and track all Escape from Tarkov tasks organized by trader and
-          level
-        </p>
-      </div>
+      <QuestHeader tasks={tasks} />
 
       {tasks.length === 0 ? (
-        <div className="flex items-center justify-center h-[600px] bg-card border border-border rounded-lg">
+        <div className="flex items-center justify-center h-[80vh] bg-card border border-border rounded-lg">
           <div className="text-center">
             <p className="text-muted-foreground mb-2">Loading task data...</p>
             <p className="text-sm text-muted-foreground">

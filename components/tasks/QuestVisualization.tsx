@@ -26,17 +26,14 @@ import { useHideout } from "@/contexts/HideoutContext";
 import { QuestCard } from "./QuestCard";
 import { QuestDialog } from "./QuestDialog";
 import { SearchInput } from "../ui/search-input";
+import { Toggle } from "@/components/ui/toggle";
+import { IconLock, IconLockOpen } from "@tabler/icons-react";
 
 interface QuestVisualizationProps {
   tasks: Task[];
 }
 
-type QuestStatus =
-  | "all"
-  | "uncompleted"
-  | "completed"
-  | "locked"
-  | "meetLevelRequirement";
+type QuestStatus = "all" | "uncompleted" | "completed" | "locked" | "available";
 type RequirementFilter = "all" | "kappa" | "lightkeeper";
 type QuestFilter = {
   requirement: RequirementFilter;
@@ -52,9 +49,10 @@ export default function QuestVisualization({ tasks }: QuestVisualizationProps) {
   const playerLevel = userState.playerLevel || 1;
   const [filter, setFilter] = useState<Omit<QuestFilter, "searchQuery">>({
     requirement: "all",
-    status: "meetLevelRequirement",
+    status: "all",
     mapId: null,
   });
+  const [showLockedByLevel, setShowLockedByLevel] = useState<boolean>(false);
 
   // Fuzzy search using the searchable tasks
   const {
@@ -157,6 +155,11 @@ export default function QuestVisualization({ tasks }: QuestVisualizationProps) {
       filtered = filtered.filter((t: Task) => t.lightkeeperRequired);
     }
 
+    // Level requirement filter (default: show only unlocked by level)
+    if (!showLockedByLevel) {
+      filtered = filtered.filter((t: Task) => meetsLevelRequirement(t));
+    }
+
     // Status filter
     if (filter.status === "completed") {
       filtered = filtered.filter((t: Task) => isQuestCompleted(t.id));
@@ -164,8 +167,10 @@ export default function QuestVisualization({ tasks }: QuestVisualizationProps) {
       filtered = filtered.filter((t: Task) => !isQuestCompleted(t.id));
     } else if (filter.status === "locked") {
       filtered = filtered.filter((t: Task) => isQuestLocked(t));
-    } else if (filter.status === "meetLevelRequirement") {
-      filtered = filtered.filter((t: Task) => meetsLevelRequirement(t));
+    } else if (filter.status === "available") {
+      filtered = filtered.filter(
+        (t: Task) => !isQuestLocked(t) && !isQuestCompleted(t.id)
+      );
     }
 
     // Map filter
@@ -182,6 +187,7 @@ export default function QuestVisualization({ tasks }: QuestVisualizationProps) {
     isQuestCompleted,
     isQuestLocked,
     meetsLevelRequirement,
+    showLockedByLevel,
   ]);
 
   // Get quests for a specific trader and level
@@ -211,17 +217,17 @@ export default function QuestVisualization({ tasks }: QuestVisualizationProps) {
   const getStatusLabel = (status: QuestStatus): string => {
     switch (status) {
       case "all":
-        return "All Quests";
+        return "All Tasks";
       case "uncompleted":
         return "Uncompleted";
       case "completed":
         return "Completed";
       case "locked":
         return "Locked";
-      case "meetLevelRequirement":
-        return "Meet Level Requirement";
+      case "available":
+        return "Available";
       default:
-        return "All Quests";
+        return "All Tasks";
     }
   };
 
@@ -254,7 +260,7 @@ export default function QuestVisualization({ tasks }: QuestVisualizationProps) {
         {/* Search Filter */}
         <div>
           <Label htmlFor="search-mobile" className="mb-2 block text-sm">
-            Search Quests
+            Search Tasks
           </Label>
           <SearchInput
             value={searchQuery}
@@ -269,25 +275,45 @@ export default function QuestVisualization({ tasks }: QuestVisualizationProps) {
           <Label htmlFor="player-level-mobile" className="mb-2 block text-sm">
             Player Level
           </Label>
-          <Input
-            id="player-level-mobile"
-            type="number"
-            min="1"
-            max="100"
-            value={playerLevel || ""}
-            onChange={(e) => {
-              const value = e.target.value;
-              if (value === "") {
-                setPlayerLevel(1);
-              } else {
-                const numValue = parseInt(value, 10);
-                if (!isNaN(numValue) && numValue >= 1 && numValue <= 100) {
-                  setPlayerLevel(numValue);
+          <div className="flex items-center gap-2">
+            <Input
+              id="player-level-mobile"
+              type="number"
+              min="1"
+              max="100"
+              value={playerLevel || ""}
+              onFocus={(e) => e.target.select()}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (value === "") {
+                  setPlayerLevel(1);
+                } else {
+                  const numValue = parseInt(value, 10);
+                  if (!isNaN(numValue) && numValue >= 1 && numValue <= 100) {
+                    setPlayerLevel(numValue);
+                  }
                 }
+              }}
+              placeholder="Enter your level"
+              className="flex-1"
+            />
+            <Toggle
+              pressed={showLockedByLevel}
+              onPressedChange={setShowLockedByLevel}
+              aria-label="Show locked by level"
+              title={
+                showLockedByLevel
+                  ? "Show all tasks"
+                  : "Show only unlocked tasks"
               }
-            }}
-            placeholder="Enter your level"
-          />
+            >
+              {showLockedByLevel ? (
+                <IconLock className="h-4 w-4" />
+              ) : (
+                <IconLockOpen className="h-4 w-4" />
+              )}
+            </Toggle>
+          </div>
         </div>
 
         {/* Menubar Filters */}
@@ -303,15 +329,13 @@ export default function QuestVisualization({ tasks }: QuestVisualizationProps) {
                   setFilter((prev) => ({ ...prev, status: value }))
                 }
               >
-                <MenubarRadioItem value="all">All Quests</MenubarRadioItem>
+                <MenubarRadioItem value="all">All Tasks</MenubarRadioItem>
                 <MenubarRadioItem value="uncompleted">
                   Uncompleted
                 </MenubarRadioItem>
                 <MenubarRadioItem value="completed">Completed</MenubarRadioItem>
                 <MenubarRadioItem value="locked">Locked</MenubarRadioItem>
-                <MenubarRadioItem value="meetLevelRequirement">
-                  Meet Level Requirement
-                </MenubarRadioItem>
+                <MenubarRadioItem value="available">Available</MenubarRadioItem>
               </MenubarRadioGroup>
             </MenubarContent>
           </MenubarMenu>
@@ -370,7 +394,7 @@ export default function QuestVisualization({ tasks }: QuestVisualizationProps) {
           {/* Search Filter */}
           <div className="flex-1 w-full md:w-auto">
             <Label htmlFor="search" className="mb-2 block">
-              Search Quests
+              Search Tasks
             </Label>
             <SearchInput
               value={searchQuery}
@@ -384,26 +408,45 @@ export default function QuestVisualization({ tasks }: QuestVisualizationProps) {
             <Label htmlFor="player-level" className="mb-2 block">
               Player Level
             </Label>
-            <Input
-              id="player-level"
-              type="number"
-              min="1"
-              max="100"
-              value={playerLevel || ""}
-              onChange={(e) => {
-                const value = e.target.value;
-                if (value === "") {
-                  setPlayerLevel(1);
-                } else {
-                  const numValue = parseInt(value, 10);
-                  if (!isNaN(numValue) && numValue >= 1 && numValue <= 100) {
-                    setPlayerLevel(numValue);
+            <div className="flex items-center gap-2">
+              <Input
+                id="player-level"
+                type="number"
+                min="1"
+                max="100"
+                value={playerLevel || ""}
+                onFocus={(e) => e.target.select()}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value === "") {
+                    setPlayerLevel(1);
+                  } else {
+                    const numValue = parseInt(value, 10);
+                    if (!isNaN(numValue) && numValue >= 1 && numValue <= 100) {
+                      setPlayerLevel(numValue);
+                    }
                   }
+                }}
+                placeholder="Enter your level"
+                className="w-full md:w-24"
+              />
+              <Toggle
+                pressed={showLockedByLevel}
+                onPressedChange={setShowLockedByLevel}
+                aria-label="Show locked by level"
+                title={
+                  showLockedByLevel
+                    ? "Show all tasks"
+                    : "Show only unlocked tasks"
                 }
-              }}
-              placeholder="Enter your level"
-              className="w-full md:w-24"
-            />
+              >
+                {showLockedByLevel ? (
+                  <IconLock className="h-4 w-4" />
+                ) : (
+                  <IconLockOpen className="h-4 w-4" />
+                )}
+              </Toggle>
+            </div>
           </div>
 
           {/* Requirement Filter */}
@@ -442,27 +485,22 @@ export default function QuestVisualization({ tasks }: QuestVisualizationProps) {
                 setFilter((prev) => ({ ...prev, status: value ?? "all" }))
               }
               items={[
-                { value: "all", label: "All Quests" },
+                { value: "all", label: "All Tasks" },
                 { value: "uncompleted", label: "Uncompleted" },
                 { value: "completed", label: "Completed" },
                 { value: "locked", label: "Locked" },
-                {
-                  value: "meetLevelRequirement",
-                  label: "Meet Level Requirement",
-                },
+                { value: "available", label: "Available" },
               ]}
             >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Quests</SelectItem>
+                <SelectItem value="all">All Tasks</SelectItem>
                 <SelectItem value="uncompleted">Uncompleted</SelectItem>
                 <SelectItem value="completed">Completed</SelectItem>
                 <SelectItem value="locked">Locked</SelectItem>
-                <SelectItem value="meetLevelRequirement">
-                  Meet Level Requirement
-                </SelectItem>
+                <SelectItem value="available">Available</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -535,7 +573,7 @@ export default function QuestVisualization({ tasks }: QuestVisualizationProps) {
         </div>
       ) : (
         /* Grid Table - Show when not searching */
-        <div className="overflow-x-auto overflow-y-auto max-h-[calc(100vh-250px)]">
+        <div className="overflow-x-auto overflow-y-auto max-h-[calc(100vh-300px)]">
           <div className="inline-block min-w-full">
             <table className="w-full border-collapse">
               <thead className="sticky top-0 z-20">

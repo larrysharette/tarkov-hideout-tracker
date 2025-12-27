@@ -10,6 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -211,12 +212,12 @@ export function QuestDialog({
             </div>
           </DialogHeader>
         )}
-        <ScrollArea className="flex-1 pr-4 px-6 pb-6">
+        <ScrollArea className="pr-4 px-6 pb-6 max-h-[calc(90vh-200px)] overflow-y-auto">
           <div className="space-y-4">
             {/* Required Quests (Prerequisites) */}
             {quest.taskRequirements.length > 0 && (
               <div>
-                <Label className="text-sm font-semibold">Required Quests</Label>
+                <Label className="text-sm font-semibold">Required Tasks</Label>
                 <div className="mt-2 space-y-1">
                   {quest.taskRequirements.map((req) => {
                     const isCompleted = isQuestCompleted(req.task.id);
@@ -328,9 +329,11 @@ export function QuestDialog({
                 </div>
               </div>
             )}
-
+          </div>
+        </ScrollArea>
+        <DialogFooter>
+          <div className="flex flex-col gap-2 px-6 pb-4 w-full">
             <Separator />
-
             {/* Mark Prerequisites Complete Button */}
             {quest.taskRequirements.length > 0 && (
               <Button
@@ -354,7 +357,7 @@ export function QuestDialog({
               </Button>
             )}
           </div>
-        </ScrollArea>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
