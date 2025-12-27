@@ -1,311 +1,327 @@
 import Link from "next/link";
+import Image from "next/image";
 import { buttonVariants } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import type { Metadata } from "next";
+import { Separator } from "@/components/ui/separator";
 
 export const metadata: Metadata = {
   title: "Home",
   description:
-    "The ultimate Escape from Tarkov tracker for hideout upgrades, task progression, inventory management, and item watchlists. Plan your upgrade path, track quest completion, manage your inventory, and never miss a task objective. Free Tarkov hideout calculator and quest tracker.",
+    "The ultimate Escape from Tarkov tracker for hideout upgrades, task progression, inventory management, and item watchlists. Plan your upgrade path, track task completion, manage your inventory, and never miss a task objective. Free Tarkov hideout calculator and task tracker.",
   openGraph: {
     title:
       "Adin's Tarkov Tracker - Complete Escape from Tarkov Progress Tracker",
     description:
-      "Comprehensive Escape from Tarkov tracker for hideout upgrades, task progression, inventory management, and item watchlists. Track station levels, quest completion, and plan your upgrade path.",
+      "Comprehensive Escape from Tarkov tracker for hideout upgrades, task progression, inventory management, and item watchlists. Track station levels, task completion, and plan your upgrade path.",
   },
 };
-
-const features = [
-  {
-    title: "Hideout Tracker",
-    description:
-      "Track your hideout station levels and trader requirements. Calculate item requirements for focused upgrades and plan your upgrade path efficiently. Manage trader levels and station upgrades all in one place.",
-    href: "/hideout",
-    keywords: [
-      "hideout upgrades",
-      "station levels",
-      "trader levels",
-      "upgrade calculator",
-      "shopping list",
-    ],
-  },
-  {
-    title: "Task Tracker",
-    description:
-      "Browse and track all Escape from Tarkov tasks organized by trader and level. Filter by status, map, and Kappa requirements. Plan your task progression and never miss an objective.",
-    href: "/tasks",
-    keywords: [
-      "tarkov tasks",
-      "quest tracker",
-      "kappa quests",
-      "task progression",
-      "quest completion",
-    ],
-  },
-  {
-    title: "Inventory Tracker",
-    description:
-      "Track your item inventory and record raids. Keep track of what items you have collected and manage your stash efficiently. Perfect for planning hideout upgrades and task requirements.",
-    href: "/inventory",
-    keywords: [
-      "inventory management",
-      "raid recording",
-      "item tracking",
-      "stash management",
-    ],
-  },
-  {
-    title: "Watchlist",
-    description:
-      "Create a watchlist of items you need to collect. Items are automatically added with quantities when you add them from other pages. Never forget what items you're looking for.",
-    href: "/watchlist",
-    keywords: [
-      "item watchlist",
-      "shopping list",
-      "item collection",
-      "required items",
-    ],
-  },
-];
 
 export default function Page() {
   return (
     <div className="container mx-auto px-4 md:px-6 max-w-7xl">
-      {/* Hero Section */}
       <section className="py-12 md:py-20 text-center">
         <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4">
           Adin's Tarkov Tracker
         </h1>
         <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto mb-8">
-          The ultimate Escape from Tarkov progress tracker. Plan your hideout
-          upgrades, track quest completion, manage your inventory, and optimize
-          your gameplay with powerful tracking tools.
+          Track your hideout upgrades, tasks, inventory, and watchlist all in
+          one place.
         </p>
-        <div className="flex flex-wrap gap-4 justify-center">
-          <Link href="/hideout" className={cn(buttonVariants({ size: "lg" }))}>
-            Get Started
-          </Link>
-          <Link
-            href="/tasks"
-            className={cn(buttonVariants({ variant: "outline", size: "lg" }))}
-          >
-            View Tasks
-          </Link>
-        </div>
       </section>
 
-      {/* Features Section */}
-      <section className="py-12 md:py-16">
-        <h2 className="text-3xl md:text-4xl font-bold text-center mb-4">
-          Complete Tarkov Tracking Solution
-        </h2>
-        <p className="text-center text-muted-foreground mb-12 max-w-2xl mx-auto">
-          Everything you need to track your Escape from Tarkov progress in one
-          place. From hideout upgrades to quest completion, manage your entire
-          Tarkov journey efficiently.
-        </p>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {features.map((feature) => (
-            <Card key={feature.href} className="flex flex-col">
-              <CardHeader>
-                <CardTitle className="text-xl">{feature.title}</CardTitle>
-                <CardDescription className="text-sm">
-                  {feature.description}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="flex-1">
-                <ul className="flex flex-wrap gap-2">
-                  {feature.keywords.map((keyword) => (
-                    <li
-                      key={keyword}
-                      className="text-xs px-2 py-1 bg-muted rounded-md text-muted-foreground"
-                    >
-                      {keyword}
-                    </li>
-                  ))}
-                </ul>
-              </CardContent>
-              <CardFooter>
-                <Link
-                  href={feature.href}
-                  className={cn(
-                    buttonVariants({ variant: "outline" }),
-                    "w-full"
-                  )}
-                >
-                  Explore {feature.title}
-                </Link>
-              </CardFooter>
-            </Card>
-          ))}
-        </div>
-      </section>
-
-      {/* Key Benefits Section */}
-      <section className="py-12 md:py-16">
-        <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
-          Why Use Adin's Tarkov Tracker?
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Comprehensive Tracking</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <CardDescription>
-                Track hideout upgrades, quest progression, inventory items, and
-                watchlists all in one application. No need to switch between
-                multiple tools.
-              </CardDescription>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle>Smart Calculations</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <CardDescription>
-                Automatically calculate item requirements for focused upgrades.
-                Generate shopping lists based on your current progress and
-                planned upgrades.
-              </CardDescription>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle>Data Portability</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <CardDescription>
-                Export and import your progress data. Never lose your tracking
-                information and sync across devices easily.
-              </CardDescription>
-            </CardContent>
-          </Card>
-        </div>
-      </section>
-
-      {/* SEO Content Section */}
-      <section className="py-12 md:py-16">
-        <div className="max-w-none space-y-6">
+      <section className="py-12 md:py-16 space-y-16">
+        <div className="flex flex-col md:flex-row gap-4">
           <div>
-            <h2 className="text-2xl font-bold mb-4">
-              Escape from Tarkov Hideout Tracker
+            <h2 className="text-2xl md:text-3xl font-bold mb-4">
+              Task Tracker
             </h2>
-            <p className="text-muted-foreground mb-4">
-              Our hideout tracker helps you manage all your Escape from Tarkov
-              hideout upgrades efficiently. Track station levels for all hideout
-              modules including the Generator, Heating, Water Collector, Air
-              Filtering Unit, Security, and more. Set your current trader levels
-              and the tracker will automatically calculate what items you need
-              for your next upgrades.
-            </p>
-            <p className="text-muted-foreground mb-4">
-              The upgrade focus manager allows you to select specific upgrades
-              you're working towards, and the system will generate a
-              comprehensive shopping list with exact item quantities needed.
-              This makes planning your hideout progression much easier and
-              ensures you never waste time collecting unnecessary items.
-            </p>
+            <ul className="text-left max-w-2xl mx-auto space-y-2 text-muted-foreground list-disc list-inside">
+              <li>Browse all tasks organized by trader</li>
+              <li>Tasks organized by trader and level</li>
+              <li>
+                Filter by completion status, map, and Kappa/Lightkeeper
+                requirements
+              </li>
+              <li>Filter by player level</li>
+              <li>See Kappa/Lightkeeper progress at a glance</li>
+              <li>
+                Bulk mark tasks as complete based on which tasks you are
+                currently on
+              </li>
+              <li>View task details, requirements, and progress</li>
+              <li>Quickly jump to the wiki page for any task</li>
+            </ul>
           </div>
-
           <div>
-            <h2 className="text-2xl font-bold mb-4 mt-8">
-              Tarkov Quest and Task Tracker
-            </h2>
-            <p className="text-muted-foreground mb-4">
-              Track all Escape from Tarkov tasks and quests organized by trader
-              and level. Filter tasks by completion status, map location, and
-              Kappa requirements. Our quest tracker helps you plan your task
-              progression efficiently, ensuring you complete tasks in the
-              optimal order and never miss important objectives.
-            </p>
-            <p className="text-muted-foreground mb-4">
-              Whether you're working towards Kappa container or just trying to
-              level up traders, our task tracker provides all the information
-              you need. See which tasks unlock other tasks, track your progress,
-              and plan your gameplay sessions around task objectives.
-            </p>
-          </div>
-
-          <div>
-            <h2 className="text-2xl font-bold mb-4 mt-8">
-              Inventory Management and Item Tracking
-            </h2>
-            <p className="text-muted-foreground mb-4">
-              Keep track of your item inventory and record raids to maintain an
-              accurate count of what you have. The inventory tracker integrates
-              seamlessly with the hideout tracker and task tracker,
-              automatically showing you what items you still need to collect.
-            </p>
-            <p className="text-muted-foreground mb-4">
-              Create a watchlist of items you need for upgrades or tasks, and
-              the system will track quantities automatically. This makes it easy
-              to know exactly what to look for during your raids, improving your
-              efficiency and reducing wasted time.
-            </p>
-          </div>
-
-          <div>
-            <h2 className="text-2xl font-bold mb-4 mt-8">
-              Free Tarkov Calculator and Planner
-            </h2>
-            <p className="text-muted-foreground mb-4">
-              All features are completely free to use. No registration required,
-              no hidden fees. Simply start tracking your progress and export
-              your data whenever you need it. The application works entirely in
-              your browser, ensuring your data stays private and secure.
-            </p>
-            <p className="text-muted-foreground">
-              Whether you're a new player just starting your Tarkov journey or a
-              veteran working towards end-game goals like Kappa container,
-              Adin's Tarkov Tracker provides the tools you need to optimize your
-              gameplay. Start tracking today and take your Escape from Tarkov
-              progression to the next level.
+            <div className="rounded-lg border overflow-hidden relative">
+              <Image
+                src="/task_screen.webp"
+                alt="Task tracker screen"
+                width={1200}
+                height={900}
+                className="w-auto h-full"
+              />
+              <Image
+                src="/task_dialog.webp"
+                alt="Task dialog showing task details"
+                width={1200}
+                height={800}
+                className="w-[30%] h-auto absolute bottom-0 right-0 z-10 border-2 border-stone-800"
+              />
+            </div>
+            <p className="text-sm text-muted-foreground mt-4">
+              You can view task details, requirements, and mark your progress.
+              Tasks are organized by trader and level.
             </p>
           </div>
         </div>
+
+        <div className="space-y-8">
+          <h2 className="text-2xl md:text-3xl font-bold mb-4">
+            Hideout Upgrades
+          </h2>
+          <div className="flex flex-col md:flex-row gap-4">
+            <div>
+              <h3 className="text-xl md:text-2xl font-bold mb-4">
+                Upgrade Focus
+              </h3>
+              <ul className="text-left max-w-2xl mx-auto space-y-2 text-muted-foreground list-disc list-inside">
+                <li>
+                  Select specific upgrades you're working on and get a shopping
+                  list of exactly what you need
+                </li>
+                <li>
+                  See a summary of all items needed across your selected
+                  upgrades
+                </li>
+                <li>
+                  Click the purchase button to auto level your station and
+                  remove the items from your inventory
+                </li>
+                <li>
+                  Quickly see how close you are to finishing your upgrades
+                </li>
+                <li>
+                  Filter upgrades to quickly see what you want to focus on
+                </li>
+              </ul>
+            </div>
+            <div>
+              <div className="rounded-lg border overflow-hidden">
+                <Image
+                  src="/upgrade_focus.webp"
+                  alt="Hideout upgrade focus manager"
+                  width={1200}
+                  height={800}
+                  className="w-full h-auto"
+                />
+              </div>
+              <p className="text-sm text-muted-foreground mt-4">
+                Select specific upgrades you're working on and get a shopping
+                list of exactly what you need.
+              </p>
+            </div>
+          </div>
+          <Separator />
+          <div className="flex flex-col md:flex-row gap-4">
+            <div>
+              <div className="rounded-lg border overflow-hidden">
+                <Image
+                  src="/item_summary.webp"
+                  alt="Item summary table"
+                  width={1200}
+                  height={800}
+                  className="w-full h-auto"
+                />
+              </div>
+              <p className="text-sm text-muted-foreground mt-4">
+                The summary shows how many of each item you need, what you have,
+                and what's still missing.
+              </p>
+            </div>
+            <div>
+              <h3 className="text-xl md:text-2xl font-bold mb-4">
+                Item Summary
+              </h3>
+              <ul className="text-left max-w-2xl mx-auto space-y-2 text-muted-foreground list-disc list-inside">
+                <li>
+                  See a summary of all items needed across your selected
+                  upgrades
+                </li>
+                <li>
+                  Focused upgrades are listed first, followed by future upgrades
+                </li>
+                <li>
+                  Quantities are calculated based on your current inventory
+                </li>
+                <li>
+                  The summary shows how many of each item you need right now,
+                  what you have, and what you will need in the future
+                </li>
+                <li>
+                  Quickly add items to your watchlist to track your progress
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-8">
+          <h2 className="text-2xl md:text-3xl font-bold mb-4">
+            Inventory Tracking
+          </h2>
+          <div className="flex flex-col md:flex-row gap-4">
+            <div>
+              <h3 className="text-xl md:text-2xl font-bold mb-4">
+                Inventory Management
+              </h3>
+              <ul className="text-left max-w-2xl mx-auto space-y-2 text-muted-foreground list-disc list-inside">
+                <li>
+                  Keep track of items in your stash that are needed for tasks
+                  and hideout upgrades
+                </li>
+                <li>Add items manually or record them after raids</li>
+                <li>
+                  Your inventory syncs with hideout upgrades and tasks to show
+                  what you still need
+                </li>
+                <li>
+                  Add items to your watchlist so you know what you need to
+                  collect
+                </li>
+                <li>
+                  Quickly add crafting items to your watchlist from the
+                  inventory view. This way you know what items you need to craft
+                  things like the Electric Motor 🙃
+                </li>
+              </ul>
+            </div>
+            <div>
+              <div className="rounded-lg border overflow-hidden">
+                <Image
+                  src="/inventory.webp"
+                  alt="Inventory tracking screen"
+                  width={1200}
+                  height={800}
+                  className="w-full h-auto"
+                />
+              </div>
+              <p className="text-sm text-muted-foreground mt-4">
+                Keep track of items in your stash that are needed for tasks and
+                hideout upgrades
+              </p>
+            </div>
+          </div>
+          <Separator />
+          <div className="flex flex-col md:flex-row gap-4">
+            <div>
+              <div className="rounded-lg border overflow-hidden">
+                <Image
+                  src="/record_raid.webp"
+                  alt="Record raid dialog"
+                  width={1200}
+                  height={800}
+                  className="w-full h-auto"
+                />
+              </div>
+              <p className="text-sm text-muted-foreground mt-4">
+                Quickly add items from your raid to keep your inventory up to
+                date.
+              </p>
+            </div>
+            <div>
+              <h3 className="text-xl md:text-2xl font-bold mb-4">
+                Record Raids
+              </h3>
+              <ul className="text-left max-w-2xl mx-auto space-y-2 text-muted-foreground list-disc list-inside">
+                <li>
+                  After each raid, record what items you found. This updates
+                  your inventory automatically
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <h2 className="text-2xl md:text-3xl font-bold mb-4">Watchlist</h2>
+          <p className="text-muted-foreground mb-6">
+            A basic watchlist of items that you want to keep track of. The
+            in-game favorite list is great but it's nice to know how MANY of the
+            item we still need. This helps with that.
+          </p>
+          <div className="rounded-lg border overflow-hidden">
+            <Image
+              src="/watchlist.webp"
+              alt="Watchlist screen"
+              width={1200}
+              height={800}
+              className="w-full h-auto"
+            />
+          </div>
+          <p className="text-sm text-muted-foreground mt-4">
+            Your watchlist shows quantities needed and what you already have
+            collected.
+          </p>
+        </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-12 md:py-16 text-center">
-        <Card className="max-w-2xl mx-auto">
-          <CardHeader>
-            <CardTitle className="text-2xl">Ready to Start Tracking?</CardTitle>
-            <CardDescription>
-              Begin tracking your Escape from Tarkov progress today. No account
-              required, completely free.
-            </CardDescription>
-          </CardHeader>
-          <CardFooter className="flex flex-wrap gap-4 justify-center">
-            <Link
-              href="/hideout"
-              className={cn(buttonVariants({ size: "lg" }))}
+      <section className="py-12 md:py-16 space-y-8 max-w-[80ch] mx-auto">
+        <h2 className="text-2xl font-bold mb-4">Other things</h2>
+        <ul className="text-left max-w-2xl space-y-2 text-muted-foreground list-disc list-inside">
+          <li>This app requires no login and is completely free to use</li>
+          <li>
+            All data is stored locally to your browser and is not shared with
+            anyone
+          </li>
+          <li>
+            You can export your data as a yaml file and import it later if you
+            want to move to a different browser or device
+          </li>
+        </ul>
+
+        <Separator />
+
+        <div className="max-w-[80ch] mx-auto">
+          <h3 className="text-xl md:text-2xl font-bold mb-4">
+            Why I made this
+          </h3>
+          <p className="text-sm text-muted-foreground mt-4">
+            Yes, this app is mostly vibe coded. I've been working as a
+            programmer for over 10 years and I try to keep my free time away
+            from programming as much as possible these days. However, in this
+            particular case most of the online trackers I found didn't have the
+            functionality I was looking for, or their UI over designed and hard
+            to use. I'm not a designer and honestly I just want to play the game
+            so I vibe coded the majority of this app to fit my needs. If that's
+            not your jam, totally understand and hope you find something else
+            that works for you.
+            <br />
+            <br />
+            I want to keep this app simple to use, focus on what is actually
+            helpful, make it as friendly as possible to all different device
+            sizes, and free to use. Unless this app becomes popular and I need
+            to pay for hosting costs, I will keep it ad free. Honestly, I really
+            doubt it would ever get to that.
+            <br />
+            <br />
+            If you find this app useful, consider sharing it with your friends.
+            <br />
+            <br />
+            Big shoutout to{" "}
+            <a
+              href="https://tarkov.dev"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-500 hover:text-blue-600"
             >
-              Track Hideout
-            </Link>
-            <Link
-              href="/tasks"
-              className={cn(buttonVariants({ variant: "outline", size: "lg" }))}
-            >
-              Track Tasks
-            </Link>
-            <Link
-              href="/inventory"
-              className={cn(buttonVariants({ variant: "outline", size: "lg" }))}
-            >
-              Manage Inventory
-            </Link>
-          </CardFooter>
-        </Card>
+              tarkov.dev
+            </a>{" "}
+            ❤️ for providing the data for this app for free. I legit wouldn't
+            have been able to make this app so easily without them.
+          </p>
+        </div>
       </section>
     </div>
   );
