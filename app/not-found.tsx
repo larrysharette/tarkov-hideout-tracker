@@ -1,6 +1,12 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 export default function NotFound() {
   return (
@@ -23,12 +29,11 @@ export default function NotFound() {
               </p>
             </div>
             <div className="flex flex-col sm:flex-row gap-2">
-              <Button asChild variant="default" className="flex-1">
-                <Link href="/">Go home</Link>
-              </Button>
-              <Button asChild variant="outline" className="flex-1">
-                <Link href="/tasks">View tasks</Link>
-              </Button>
+              <Link href="/" className="w-full">
+                <Button variant="default" className="flex-1">
+                  Go home
+                </Button>
+              </Link>
             </div>
           </CardContent>
         </Card>
@@ -36,4 +41,3 @@ export default function NotFound() {
     </div>
   );
 }
-
