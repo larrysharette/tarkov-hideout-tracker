@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useHideout } from "@/contexts/HideoutContext";
 import {
   AlertDialog,
@@ -35,9 +35,13 @@ export function RecordRaidDialog() {
   const [items, setItems] = useState<Item[]>([]);
   const [isLoadingItems, setIsLoadingItems] = useState(false);
   const [raidItems, setRaidItems] = useState<RaidItem[]>([
-    { id: crypto.randomUUID(), item: null, quantity: 0 },
+    { id: crypto.randomUUID(), item: null, quantity: 1 },
+    { id: crypto.randomUUID(), item: null, quantity: 1 },
+    { id: crypto.randomUUID(), item: null, quantity: 1 },
   ]);
   const { setInventoryQuantity, userState } = useHideout();
+  const comboboxRefs = useRef<Map<string, HTMLInputElement>>(new Map());
+  const lastAddedItemId = useRef<string | null>(null);
 
   // Fetch items from API
   useEffect(() => {
@@ -65,15 +69,37 @@ export function RecordRaidDialog() {
   // Reset form when dialog closes
   useEffect(() => {
     if (!open) {
-      setRaidItems([{ id: crypto.randomUUID(), item: null, quantity: 0 }]);
+      setRaidItems([
+        { id: crypto.randomUUID(), item: null, quantity: 1 },
+        { id: crypto.randomUUID(), item: null, quantity: 1 },
+        { id: crypto.randomUUID(), item: null, quantity: 1 },
+      ]);
+      lastAddedItemId.current = null;
+      comboboxRefs.current.clear();
     }
   }, [open]);
 
+  // Focus newly added Combobox
+  useEffect(() => {
+    if (lastAddedItemId.current) {
+      const itemId = lastAddedItemId.current;
+      // Use setTimeout to ensure the DOM has updated and ref callback has been called
+      const timeoutId = setTimeout(() => {
+        const inputElement = comboboxRefs.current.get(itemId);
+        if (inputElement) {
+          inputElement.focus();
+        }
+        lastAddedItemId.current = null;
+      }, 50);
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [raidItems]);
+
   const addItem = useCallback(() => {
-    setRaidItems((prev) => [
-      ...prev,
-      { id: crypto.randomUUID(), item: null, quantity: 0 },
-    ]);
+    const newId = crypto.randomUUID();
+    lastAddedItemId.current = newId;
+    setRaidItems((prev) => [...prev, { id: newId, item: null, quantity: 1 }]);
   }, []);
 
   const removeItem = useCallback((id: string) => {
@@ -133,9 +159,24 @@ export function RecordRaidDialog() {
             raidItems.map((raidItem, index) => (
               <div
                 key={raidItem.id}
-                className="flex gap-2  items-start p-3 border rounded-lg bg-background"
+                className="flex gap-2 items-start bg-background"
               >
-                <div className="flex flex-1 flex-col md:flex-row gap-2 items-center">
+                <div
+                  className="flex flex-1 flex-col md:flex-row gap-2 items-center"
+                  ref={(el) => {
+                    if (el) {
+                      // Find the actual input element within the Combobox
+                      const input = el.querySelector(
+                        'input[data-slot="input-group-control"]'
+                      ) as HTMLInputElement;
+                      if (input) {
+                        comboboxRefs.current.set(raidItem.id, input);
+                      }
+                    } else {
+                      comboboxRefs.current.delete(raidItem.id);
+                    }
+                  }}
+                >
                   <Combobox
                     items={itemNames}
                     value={raidItem.item?.name || ""}
@@ -187,6 +228,16 @@ export function RecordRaidDialog() {
                     onChange={(e) => {
                       const value = parseInt(e.target.value, 10) || 0;
                       updateItem(raidItem.id, { quantity: value });
+                    }}
+                    onKeyDown={(e) => {
+                      const isLastItem = index === raidItems.length - 1;
+                      if (
+                        isLastItem &&
+                        (e.key === "Tab" || e.key === "Enter")
+                      ) {
+                        e.preventDefault();
+                        addItem();
+                      }
                     }}
                     className="w-full md:max-w-20"
                   />

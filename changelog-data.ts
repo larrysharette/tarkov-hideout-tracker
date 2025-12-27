@@ -21,6 +21,7 @@ export const changelogEntries: ChangelogEntry[] = [
       "Fixed scrolling issue in the task visualization",
       "Added the data by tarkov.dev link to the navigation. Should have been there the whole time.",
       "Updated the home page to be more directly informative and less marketing-y. It was vibe coded so I didn't have to think too much about it and frankly, it was ass.",
+      "Improved the Record Raid Dialog to be more condensed and easier to use. Pressing Tab or Enter on the last item will auto add a new item.",
     ],
   },
   {
