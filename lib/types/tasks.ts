@@ -33,9 +33,9 @@ export interface Task {
   id: string;
   wikiLink: string;
   name: string;
-  neededKeys: {
+  neededKeys: Array<{
     keys: TaskKey[];
-  };
+  }> | null;
   kappaRequired: boolean;
   lightkeeperRequired: boolean;
   minPlayerLevel: number | null;
@@ -56,4 +56,3 @@ export interface QuestNode {
   dependencies: string[]; // IDs of tasks this quest depends on
   dependents: string[]; // IDs of tasks that depend on this quest
 }
-

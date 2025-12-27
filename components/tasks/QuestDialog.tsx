@@ -106,6 +106,8 @@ export function QuestDialog({
 
   if (!quest) return null;
 
+  const neededKeys = quest.neededKeys?.flatMap((key) => key.keys) ?? [];
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent size="lg" className="max-h-[90vh] flex flex-col p-0">
@@ -242,11 +244,11 @@ export function QuestDialog({
             )}
 
             {/* Required Keys */}
-            {quest.neededKeys.keys.length > 0 && (
+            {neededKeys.length > 0 && (
               <div>
                 <Label className="text-sm font-semibold">Required Keys</Label>
                 <div className="mt-2 space-y-1">
-                  {quest.neededKeys.keys.map((key) => (
+                  {neededKeys.map((key) => (
                     <Card key={key.id} className="p-2">
                       <div className="flex items-center gap-2">
                         {key.imageLink && (

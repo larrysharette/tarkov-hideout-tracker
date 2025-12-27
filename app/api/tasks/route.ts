@@ -85,9 +85,9 @@ export interface Task {
   id: string;
   wikiLink: string;
   name: string;
-  neededKeys: {
+  neededKeys: Array<{
     keys: TaskKey[];
-  };
+  }> | null;
   kappaRequired: boolean;
   lightkeeperRequired: boolean;
   minPlayerLevel: number | null;
