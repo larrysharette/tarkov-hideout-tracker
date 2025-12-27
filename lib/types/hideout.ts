@@ -165,6 +165,7 @@ export interface HideoutContextValue {
   setTraderLevel: (traderName: string, level: number) => void;
   purchaseUpgrade: (upgrade: StationLevel) => void;
   toggleQuestCompletion: (questId: string) => void;
+  markQuestsAsCompleted: (questIds: string[]) => void;
   addToWatchlist: (itemName: string, quantity: number) => void;
   setWatchlistQuantity: (itemName: string, quantity: number) => void;
   removeFromWatchlist: (itemName: string) => void;

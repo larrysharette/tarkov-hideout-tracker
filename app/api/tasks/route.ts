@@ -19,6 +19,7 @@ const TASKS_QUERY = `
         }
       }
       kappaRequired
+      lightkeeperRequired
       minPlayerLevel
       trader {
         id
@@ -88,6 +89,7 @@ export interface Task {
     keys: TaskKey[];
   };
   kappaRequired: boolean;
+  lightkeeperRequired: boolean;
   minPlayerLevel: number | null;
   trader: TaskTrader | null;
   taskRequirements: TaskRequirement[];
@@ -155,4 +157,3 @@ export async function GET() {
     );
   }
 }
-

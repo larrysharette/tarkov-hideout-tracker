@@ -20,6 +20,7 @@ import {
   IconArrowRight,
   IconArrowRightFromArc,
   IconEye,
+  IconCheck,
 } from "@tabler/icons-react";
 
 interface QuestDialogProps {
@@ -38,6 +39,37 @@ function formatObjectiveType(type: string): string {
     .trim();
 }
 
+// Recursively collect all prerequisite task IDs
+function getAllPrerequisiteIds(
+  taskId: string,
+  allQuests: Task[],
+  visited: Set<string> = new Set(),
+  result: Set<string> = new Set()
+): string[] {
+  // Avoid cycles - if we've already processed this task, return current results
+  if (visited.has(taskId)) {
+    return Array.from(result);
+  }
+  visited.add(taskId);
+
+  const task = allQuests.find((t) => t.id === taskId);
+  if (!task) {
+    return Array.from(result);
+  }
+
+  // Process all requirements of this task
+  for (const req of task.taskRequirements) {
+    const reqId = req.task.id;
+    // Add to result if not already present
+    result.add(reqId);
+    // Recursively get prerequisites of this prerequisite
+    // This will handle nested prerequisites and avoid cycles via visited set
+    getAllPrerequisiteIds(reqId, allQuests, visited, result);
+  }
+
+  return Array.from(result);
+}
+
 export function QuestDialog({
   quest,
   allQuests,
@@ -45,7 +77,8 @@ export function QuestDialog({
   onOpenChange,
   onQuestClick,
 }: QuestDialogProps) {
-  const { isQuestCompleted, toggleQuestCompletion } = useQuest();
+  const { isQuestCompleted, toggleQuestCompletion, markQuestsAsCompleted } =
+    useQuest();
 
   // Get quests that this quest unlocks
   const getUnlockedQuests = useCallback(
@@ -56,6 +89,19 @@ export function QuestDialog({
     },
     [allQuests]
   );
+
+  // Handle marking all prerequisites as completed
+  const handleMarkPrerequisitesComplete = useCallback(() => {
+    if (!quest) return;
+    const prerequisiteIds = getAllPrerequisiteIds(quest.id, allQuests);
+    // Filter out already completed quests
+    const uncompletedPrereqs = prerequisiteIds.filter(
+      (id) => !isQuestCompleted(id)
+    );
+    if (uncompletedPrereqs.length > 0) {
+      markQuestsAsCompleted(uncompletedPrereqs);
+    }
+  }, [quest, allQuests, isQuestCompleted, markQuestsAsCompleted]);
 
   if (!quest) return null;
 
@@ -116,11 +162,18 @@ export function QuestDialog({
                   <DialogTitle className="text-white drop-shadow-lg">
                     {quest.name}
                   </DialogTitle>
-                  {quest.kappaRequired && (
-                    <Badge className="bg-amber-500 text-amber-950 mt-2 w-fit">
-                      Kappa Required
-                    </Badge>
-                  )}
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {quest.kappaRequired && (
+                      <Badge className="bg-amber-500 text-amber-950 w-fit">
+                        Kappa Required
+                      </Badge>
+                    )}
+                    {quest.lightkeeperRequired && (
+                      <Badge className="bg-blue-500 text-blue-950 w-fit">
+                        Lightkeeper Required
+                      </Badge>
+                    )}
+                  </div>
                 </DialogHeader>
 
                 {/* Mark as Completed checkbox */}
@@ -144,11 +197,18 @@ export function QuestDialog({
         ) : (
           <DialogHeader className="px-6 pt-6">
             <DialogTitle>{quest.name}</DialogTitle>
-            {quest.kappaRequired && (
-              <Badge className="bg-amber-500 text-amber-950 mt-2 w-fit">
-                Kappa Required
-              </Badge>
-            )}
+            <div className="flex flex-wrap gap-2 mt-2">
+              {quest.kappaRequired && (
+                <Badge className="bg-amber-500 text-amber-950 w-fit">
+                  Kappa Required
+                </Badge>
+              )}
+              {quest.lightkeeperRequired && (
+                <Badge className="bg-blue-500 text-blue-950 w-fit">
+                  Lightkeeper Required
+                </Badge>
+              )}
+            </div>
           </DialogHeader>
         )}
         <ScrollArea className="flex-1 pr-4 px-6 pb-6">
@@ -270,6 +330,18 @@ export function QuestDialog({
             )}
 
             <Separator />
+
+            {/* Mark Prerequisites Complete Button */}
+            {quest.taskRequirements.length > 0 && (
+              <Button
+                variant="default"
+                className="w-full"
+                onClick={handleMarkPrerequisitesComplete}
+              >
+                <IconCheck className="mr-2 h-4 w-4" />
+                Mark Prerequisites Complete
+              </Button>
+            )}
 
             {/* Wiki Link */}
             {quest.wikiLink && (

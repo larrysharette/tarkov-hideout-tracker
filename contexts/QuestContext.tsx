@@ -7,12 +7,17 @@ interface QuestContextValue {
   completedQuests: Set<string>;
   toggleQuestCompletion: (questId: string) => void;
   isQuestCompleted: (questId: string) => boolean;
+  markQuestsAsCompleted: (questIds: string[]) => void;
 }
 
 const QuestContext = createContext<QuestContextValue | null>(null);
 
 export function QuestProvider({ children }: { children: React.ReactNode }) {
-  const { userState, toggleQuestCompletion: toggleQuest } = useHideout();
+  const {
+    userState,
+    toggleQuestCompletion: toggleQuest,
+    markQuestsAsCompleted: markQuests,
+  } = useHideout();
 
   const completedQuests = useMemo(() => {
     return new Set(userState.completedQuests || []);
@@ -27,6 +32,7 @@ export function QuestProvider({ children }: { children: React.ReactNode }) {
     completedQuests,
     toggleQuestCompletion: toggleQuest,
     isQuestCompleted,
+    markQuestsAsCompleted: markQuests,
   };
 
   return (

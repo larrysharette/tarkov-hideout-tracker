@@ -251,6 +251,19 @@ export function HideoutProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
+  const markQuestsAsCompleted = useCallback((questIds: string[]) => {
+    setUserState((prev) => {
+      const completedQuests = new Set(prev.completedQuests || []);
+      questIds.forEach((questId) => {
+        completedQuests.add(questId);
+      });
+      return {
+        ...prev,
+        completedQuests: Array.from(completedQuests),
+      };
+    });
+  }, []);
+
   const addToWatchlist = useCallback((itemName: string, quantity: number) => {
     setUserState((prev) => {
       const currentQuantity = prev.watchlist?.[itemName] || 0;
@@ -337,6 +350,7 @@ export function HideoutProvider({ children }: { children: React.ReactNode }) {
     setTraderLevel,
     purchaseUpgrade,
     toggleQuestCompletion,
+    markQuestsAsCompleted,
     addToWatchlist,
     setWatchlistQuantity,
     removeFromWatchlist,

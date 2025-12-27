@@ -3,7 +3,6 @@
 import { useMemo, useState, useCallback } from "react";
 import type { Task } from "@/lib/types/tasks";
 import { Card } from "@/components/ui/card";
-import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -20,7 +19,6 @@ import {
   MenubarContent,
   MenubarRadioGroup,
   MenubarRadioItem,
-  MenubarCheckboxItem,
 } from "@/components/ui/menubar";
 import { useQuest } from "@/contexts/QuestContext";
 import { QuestCard } from "./QuestCard";
@@ -32,8 +30,9 @@ interface QuestVisualizationProps {
 }
 
 type QuestStatus = "all" | "uncompleted" | "completed" | "locked";
+type RequirementFilter = "all" | "kappa" | "lightkeeper";
 type QuestFilter = {
-  kappaOnly: boolean;
+  requirement: RequirementFilter;
   status: QuestStatus;
   mapId: string | null;
   searchQuery: string;
@@ -43,7 +42,7 @@ export default function QuestVisualization({ tasks }: QuestVisualizationProps) {
   const { isQuestCompleted } = useQuest();
   const [selectedQuest, setSelectedQuest] = useState<Task | null>(null);
   const [filter, setFilter] = useState<Omit<QuestFilter, "searchQuery">>({
-    kappaOnly: false,
+    requirement: "all",
     status: "all",
     mapId: null,
   });
@@ -129,9 +128,11 @@ export default function QuestVisualization({ tasks }: QuestVisualizationProps) {
     // Start with fuzzy search results if searching, otherwise use all tasks
     let filtered = searchQuery.trim() ? fuzzySearchTasks : tasks;
 
-    // Kappa filter
-    if (filter.kappaOnly) {
+    // Requirement filter (Kappa or Lightkeeper)
+    if (filter.requirement === "kappa") {
       filtered = filtered.filter((t: Task) => t.kappaRequired);
+    } else if (filter.requirement === "lightkeeper") {
+      filtered = filtered.filter((t: Task) => t.lightkeeperRequired);
     }
 
     // Status filter
@@ -170,6 +171,17 @@ export default function QuestVisualization({ tasks }: QuestVisualizationProps) {
     [filteredTasks]
   );
 
+  // Filter levels to only show rows that have at least one task
+  const visibleLevels = useMemo(() => {
+    return levels.filter((level) => {
+      // Check if any trader has tasks for this level
+      return traders.some((trader) => {
+        const cellQuests = getQuestsForCell(trader.name, level);
+        return cellQuests.length > 0;
+      });
+    });
+  }, [levels, traders, getQuestsForCell]);
+
   // Helper function to get status label
   const getStatusLabel = (status: QuestStatus): string => {
     switch (status) {
@@ -191,6 +203,20 @@ export default function QuestVisualization({ tasks }: QuestVisualizationProps) {
     if (!mapId) return "All Maps";
     const map = maps.find(([id]) => id === mapId);
     return map ? map[1] : "All Maps";
+  };
+
+  // Helper function to get requirement filter label
+  const getRequirementLabel = (value: RequirementFilter): string => {
+    switch (value) {
+      case "all":
+        return "All Tasks";
+      case "kappa":
+        return "Kappa Required";
+      case "lightkeeper":
+        return "Lightkeeper Required";
+      default:
+        return "All Tasks";
+    }
   };
 
   return (
@@ -259,16 +285,24 @@ export default function QuestVisualization({ tasks }: QuestVisualizationProps) {
           </MenubarMenu>
 
           <MenubarMenu>
-            <MenubarTrigger className="text-xs">Kappa</MenubarTrigger>
+            <MenubarTrigger className="text-xs">
+              Requirement: {getRequirementLabel(filter.requirement)}
+            </MenubarTrigger>
             <MenubarContent>
-              <MenubarCheckboxItem
-                checked={filter.kappaOnly}
-                onCheckedChange={(checked) =>
-                  setFilter((prev) => ({ ...prev, kappaOnly: checked }))
+              <MenubarRadioGroup
+                value={filter.requirement}
+                onValueChange={(value: RequirementFilter) =>
+                  setFilter((prev) => ({ ...prev, requirement: value }))
                 }
               >
-                Kappa Required Only
-              </MenubarCheckboxItem>
+                <MenubarRadioItem value="all">All Tasks</MenubarRadioItem>
+                <MenubarRadioItem value="kappa">
+                  Kappa Required
+                </MenubarRadioItem>
+                <MenubarRadioItem value="lightkeeper">
+                  Lightkeeper Required
+                </MenubarRadioItem>
+              </MenubarRadioGroup>
             </MenubarContent>
           </MenubarMenu>
         </Menubar>
@@ -289,18 +323,31 @@ export default function QuestVisualization({ tasks }: QuestVisualizationProps) {
             />
           </div>
 
-          {/* Kappa Only Filter */}
-          <div className="flex items-center space-x-2">
-            <Switch
-              id="kappa-only"
-              checked={filter.kappaOnly}
-              onCheckedChange={(checked) =>
-                setFilter((prev) => ({ ...prev, kappaOnly: checked }))
+          {/* Requirement Filter */}
+          <div className="w-full md:w-auto">
+            <Label className="mb-2 block">Requirement</Label>
+            <Select
+              value={filter.requirement}
+              onValueChange={(value: RequirementFilter | null) =>
+                setFilter((prev) => ({ ...prev, requirement: value ?? "all" }))
               }
-            />
-            <Label htmlFor="kappa-only" className="cursor-pointer">
-              Kappa Required Only
-            </Label>
+              items={[
+                { value: "all", label: "All Tasks" },
+                { value: "kappa", label: "Kappa Required" },
+                { value: "lightkeeper", label: "Lightkeeper Required" },
+              ]}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Tasks</SelectItem>
+                <SelectItem value="kappa">Kappa Required</SelectItem>
+                <SelectItem value="lightkeeper">
+                  Lightkeeper Required
+                </SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Status Filter */}
@@ -428,7 +475,7 @@ export default function QuestVisualization({ tasks }: QuestVisualizationProps) {
                 </tr>
               </thead>
               <tbody>
-                {levels.map((level) => (
+                {visibleLevels.map((level) => (
                   <tr key={level}>
                     <td className="border border-border p-2 bg-muted/50 sticky left-0 z-10 font-semibold">
                       {level === 0 ? "No Level" : `Level ${level}`}

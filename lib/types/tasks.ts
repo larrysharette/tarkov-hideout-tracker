@@ -37,6 +37,7 @@ export interface Task {
     keys: TaskKey[];
   };
   kappaRequired: boolean;
+  lightkeeperRequired: boolean;
   minPlayerLevel: number | null;
   trader: TaskTrader | null;
   taskRequirements: TaskRequirement[];

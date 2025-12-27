@@ -6,6 +6,16 @@ interface ChangelogEntry {
 
 export const changelogEntries: ChangelogEntry[] = [
   {
+    version: "0.1.2",
+    date: "2025-12-28",
+    changes: [
+      "Added Lightkeeper requirement support for quests",
+      "Enhanced quest filtering with requirement filter (All/Kappa/Lightkeeper)",
+      "Added 'Mark Prerequisites Complete' button to bulk mark prerequisite quests as completed",
+      "Improved quest visualization to hide empty level rows",
+    ],
+  },
+  {
     version: "0.1.1",
     date: "2025-12-27",
     changes: [
