@@ -49,7 +49,7 @@ export default function QuestVisualization({ tasks }: QuestVisualizationProps) {
   const playerLevel = userState.playerLevel || 1;
   const [filter, setFilter] = useState<Omit<QuestFilter, "searchQuery">>({
     requirement: "all",
-    status: "all",
+    status: "available",
     mapId: null,
   });
   const [showLockedByLevel, setShowLockedByLevel] = useState<boolean>(false);
@@ -202,16 +202,27 @@ export default function QuestVisualization({ tasks }: QuestVisualizationProps) {
     [filteredTasks]
   );
 
+  // Filter traders to only show columns that have at least one task
+  const visibleTraders = useMemo(() => {
+    return traders.filter((trader) => {
+      // Check if this trader has any tasks in filteredTasks
+      return filteredTasks.some((task) => {
+        const taskTraderName = task.trader?.name || "No Trader";
+        return taskTraderName === trader.name;
+      });
+    });
+  }, [traders, filteredTasks]);
+
   // Filter levels to only show rows that have at least one task
   const visibleLevels = useMemo(() => {
     return levels.filter((level) => {
       // Check if any trader has tasks for this level
-      return traders.some((trader) => {
+      return visibleTraders.some((trader) => {
         const cellQuests = getQuestsForCell(trader.name, level);
         return cellQuests.length > 0;
       });
     });
-  }, [levels, traders, getQuestsForCell]);
+  }, [levels, visibleTraders, getQuestsForCell]);
 
   // Helper function to get status label
   const getStatusLabel = (status: QuestStatus): string => {
@@ -581,7 +592,7 @@ export default function QuestVisualization({ tasks }: QuestVisualizationProps) {
                   <th className="border border-border p-2 bg-muted/50 sticky left-0 z-30">
                     Level / Trader
                   </th>
-                  {traders.map((trader) => (
+                  {visibleTraders.map((trader) => (
                     <th
                       key={trader.name}
                       className="border border-border p-2 bg-muted/50 min-w-[200px]"
@@ -608,7 +619,7 @@ export default function QuestVisualization({ tasks }: QuestVisualizationProps) {
                     <td className="border border-border p-2 bg-muted/50 sticky left-0 z-10 font-semibold">
                       {level === 0 ? "No Level" : `Level ${level}`}
                     </td>
-                    {traders.map((trader) => {
+                    {visibleTraders.map((trader) => {
                       const cellQuests = getQuestsForCell(trader.name, level);
                       return (
                         <td
