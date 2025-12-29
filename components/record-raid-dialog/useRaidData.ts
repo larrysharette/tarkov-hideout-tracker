@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import type { Item } from "@/app/api/items/route";
 import type { Task } from "@/lib/types/tasks";
+import { addVersionToApiUrl } from "@/lib/utils/version";
 
 export function useRaidData(open: boolean) {
   const [items, setItems] = useState<Item[]>([]);
@@ -13,7 +14,7 @@ export function useRaidData(open: boolean) {
       setIsLoadingItems(true);
       setIsLoadingTasks(true);
       Promise.all([
-        fetch("/api/items")
+        fetch(addVersionToApiUrl("/api/items"))
           .then((res) => {
             if (!res.ok) {
               throw new Error("Failed to fetch items");
@@ -29,7 +30,7 @@ export function useRaidData(open: boolean) {
           .finally(() => {
             setIsLoadingItems(false);
           }),
-        fetch("/api/tasks")
+        fetch(addVersionToApiUrl("/api/tasks"))
           .then((res) => {
             if (!res.ok) {
               throw new Error("Failed to fetch tasks");

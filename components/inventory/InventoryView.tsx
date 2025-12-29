@@ -37,6 +37,7 @@ import {
 import { useFuzzySearch } from "@/hooks/use-fuzzy-search";
 import { SearchInput } from "@/components/ui/search-input";
 import type { Item } from "@/app/api/items/route";
+import { addVersionToApiUrl } from "@/lib/utils/version";
 
 function formatNumber(num: number): string {
   return num.toLocaleString("en-US");
@@ -90,7 +91,7 @@ export function InventoryView() {
   // Fetch items from API for icons
   useEffect(() => {
     setIsLoadingItems(true);
-    fetch("/api/items")
+    fetch(addVersionToApiUrl("/api/items"))
       .then((res) => {
         if (!res.ok) {
           throw new Error("Failed to fetch items");

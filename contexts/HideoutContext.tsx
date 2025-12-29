@@ -22,6 +22,7 @@ import {
   calculateItemSummary,
 } from "@/lib/utils/hideout-calculations";
 import { getUpgradeKey } from "@/lib/utils/hideout-data";
+import { addVersionToApiUrl } from "@/lib/utils/version";
 
 const STORAGE_KEY = "tarkov-hideout-state";
 const STORAGE_VERSION = 1;
@@ -65,8 +66,8 @@ export function HideoutProvider({ children }: { children: React.ReactNode }) {
 
         // Fetch both hideout and traders data in parallel
         const [hideoutResponse, tradersResponse] = await Promise.all([
-          fetch("/api/hideout"),
-          fetch("/api/traders"),
+          fetch(addVersionToApiUrl("/api/hideout")),
+          fetch(addVersionToApiUrl("/api/traders")),
         ]);
 
         if (!hideoutResponse.ok) {

@@ -3,6 +3,7 @@ import { QuestHeader } from "@/components/tasks/QuestHeader";
 import type { Task } from "@/lib/types/tasks";
 import type { Metadata } from "next";
 import { headers } from "next/headers";
+import { addVersionToApiUrl } from "@/lib/utils/version";
 
 export const metadata: Metadata = {
   title: "Task Tracker",
@@ -23,7 +24,7 @@ async function getTasks(): Promise<Task[]> {
     const protocol = process.env.NODE_ENV === "production" ? "https" : "http";
     const baseUrl = `${protocol}://${host}`;
 
-    const response = await fetch(`${baseUrl}/api/tasks`, {
+    const response = await fetch(addVersionToApiUrl(`${baseUrl}/api/tasks`), {
       next: { revalidate: 86400 }, // Revalidate every 24 hours
     });
 

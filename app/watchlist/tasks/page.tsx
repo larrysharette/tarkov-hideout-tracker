@@ -26,6 +26,7 @@ import { useFuzzySearch } from "@/hooks/use-fuzzy-search";
 import { SearchInput } from "@/components/ui/search-input";
 import type { Task } from "@/lib/types/tasks";
 import { QuestDialog } from "@/components/tasks/QuestDialog";
+import { addVersionToApiUrl } from "@/lib/utils/version";
 
 export default function WatchlistTasksPage() {
   const {
@@ -44,7 +45,7 @@ export default function WatchlistTasksPage() {
   // Fetch tasks from API
   useEffect(() => {
     setIsLoadingTasks(true);
-    fetch("/api/tasks")
+    fetch(addVersionToApiUrl("/api/tasks"))
       .then((res) => {
         if (!res.ok) {
           throw new Error("Failed to fetch tasks");

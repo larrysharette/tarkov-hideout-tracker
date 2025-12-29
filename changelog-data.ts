@@ -6,6 +6,19 @@ interface ChangelogEntry {
 
 export const changelogEntries: ChangelogEntry[] = [
   {
+    version: "0.1.3",
+    date: "2025-12-29",
+    changes: [
+      "Added task watchlist functionality - tasks can now be added to watchlist separately from items",
+      "Refactored watchlist into overview page with map filtering and dedicated items/tasks pages",
+      "Added map images for all Tarkov maps displayed in watchlist overview",
+      "Enhanced Record Raid Dialog with task selection and completion tracking",
+      "Improved Record Raid Dialog summary view showing hideout progress and task completion",
+      "Updated navigation import/export buttons to icon-only and moved the Record Raid button there",
+      "Improved cache management when I publish new versions of the app",
+    ],
+  },
+  {
     version: "0.1.2",
     date: "2025-12-28",
     changes: [

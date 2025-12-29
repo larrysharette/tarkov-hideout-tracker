@@ -31,6 +31,7 @@ import type { Task } from "@/lib/types/tasks";
 import type { Item } from "@/app/api/items/route";
 import { toSnakeCase } from "@/lib/utils";
 import { ItemHoverCard } from "@/components/ui/item-hover-card";
+import { addVersionToApiUrl } from "@/lib/utils/version";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -54,7 +55,10 @@ export default function WatchlistOverviewPage() {
   // Fetch tasks and items from API
   useEffect(() => {
     setIsLoadingData(true);
-    Promise.all([fetch("/api/tasks"), fetch("/api/items")])
+    Promise.all([
+      fetch(addVersionToApiUrl("/api/tasks")),
+      fetch(addVersionToApiUrl("/api/items")),
+    ])
       .then(async ([tasksRes, itemsRes]) => {
         if (!tasksRes.ok) throw new Error("Failed to fetch tasks");
         if (!itemsRes.ok) throw new Error("Failed to fetch items");
