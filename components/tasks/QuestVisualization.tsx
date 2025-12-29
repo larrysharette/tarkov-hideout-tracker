@@ -584,7 +584,7 @@ export default function QuestVisualization({ tasks }: QuestVisualizationProps) {
         </div>
       ) : (
         /* Grid Table - Show when not searching */
-        <div className="overflow-x-auto overflow-y-auto max-h-[calc(100vh-300px)]">
+        <div className="overflow-x-auto overflow-y-auto max-h-[calc(100svh-300px)]">
           <div className="inline-block min-w-full">
             <table className="w-full border-collapse">
               <thead className="sticky top-0 z-20">

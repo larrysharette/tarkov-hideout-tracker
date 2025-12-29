@@ -255,7 +255,7 @@ export default function WatchlistOverviewPage() {
           {/* Left Column - Map Image */}
           <div className="order-2 lg:order-1">
             {mapImagePath ? (
-              <div className="relative w-full h-[calc(100vh-15rem)] bg-stone-900/50">
+              <div className="relative w-full h-[calc(100svh-15rem)] bg-stone-900/50">
                 <Image
                   src={mapImagePath}
                   alt={
@@ -276,7 +276,7 @@ export default function WatchlistOverviewPage() {
 
           {/* Right Column - Tasks and Items */}
           <div className="order-1 lg:order-2">
-            <Card className="h-[calc(100vh-15rem)] overflow-y-auto">
+            <Card className="h-[calc(100svh-15rem)] overflow-y-auto">
               <CardContent className="py-2">
                 {/* Tasks Section */}
                 <div className="mb-3">

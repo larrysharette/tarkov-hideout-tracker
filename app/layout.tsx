@@ -167,7 +167,7 @@ export default function RootLayout({
         <HideoutProvider>
           <QuestProvider>
             <Navigation />
-            <main className="min-h-[calc(100vh-58px)]">{children}</main>
+            <main className="min-h-[calc(100svh-58px)]">{children}</main>
           </QuestProvider>
         </HideoutProvider>
         <Analytics />
