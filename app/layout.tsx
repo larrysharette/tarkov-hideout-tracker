@@ -5,8 +5,9 @@ import "./globals.css";
 import { Analytics } from "@vercel/analytics/next";
 import { Navigation } from "@/components/Navigation";
 import { QuestProvider } from "@/contexts/QuestContext";
-import { HideoutProvider } from "@/contexts/HideoutContext";
 import { VersionChecker } from "@/components/VersionChecker";
+import { DataSync } from "@/components/DataSync";
+import { Migration } from "@/components/Migration";
 
 const notoSans = Noto_Sans({ variable: "--font-sans" });
 
@@ -163,13 +164,13 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
         />
 
+        <DataSync />
+        <Migration />
         <VersionChecker />
-        <HideoutProvider>
-          <QuestProvider>
-            <Navigation />
-            <main className="min-h-[calc(100svh-58px)]">{children}</main>
-          </QuestProvider>
-        </HideoutProvider>
+        <Navigation />
+        <QuestProvider>
+          <main className="min-h-[calc(100svh-58px)]">{children}</main>
+        </QuestProvider>
         <Analytics />
       </body>
     </html>

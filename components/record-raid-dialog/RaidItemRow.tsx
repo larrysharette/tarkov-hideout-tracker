@@ -2,16 +2,9 @@
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Combobox,
-  ComboboxContent,
-  ComboboxEmpty,
-  ComboboxInput,
-  ComboboxItem,
-  ComboboxList,
-} from "@/components/ui/combobox";
+import { ItemSelector } from "@/components/ui/item-selector";
 import { IconX } from "@tabler/icons-react";
-import type { Item } from "@/app/api/items/route";
+import type { Item } from "@/lib/types/item";
 import type { RaidItem } from "./types";
 
 interface RaidItemRowProps {
@@ -45,43 +38,16 @@ export function RaidItemRow({
         className="flex flex-1 flex-col md:flex-row gap-2 items-center"
         ref={getComboboxRef(raidItem.id)}
       >
-        <Combobox
-          items={itemNames}
+        <ItemSelector
+          items={items}
+          itemNames={itemNames}
           value={raidItem.item?.name || ""}
           onValueChange={(value) => {
             const selectedItem = items.find((item) => item.name === value);
             onUpdate(raidItem.id, { item: selectedItem || null });
           }}
-          limit={10}
-        >
-          <ComboboxInput
-            showClear
-            placeholder="Search for an item..."
-            className="w-full"
-          />
-          <ComboboxContent>
-            <ComboboxEmpty>No items found.</ComboboxEmpty>
-            <ComboboxList>
-              {(itemName) => {
-                const item = items.find((i) => i.name === itemName);
-                return (
-                  <ComboboxItem key={item?.id ?? itemName} value={itemName}>
-                    <div className="flex items-center gap-2">
-                      {item?.iconLink && (
-                        <img
-                          src={item.iconLink}
-                          alt={itemName}
-                          className="w-5 h-5 object-contain"
-                        />
-                      )}
-                      <span>{itemName}</span>
-                    </div>
-                  </ComboboxItem>
-                );
-              }}
-            </ComboboxList>
-          </ComboboxContent>
-        </Combobox>
+          placeholder="Search for an item..."
+        />
 
         <Input
           type="number"
@@ -114,4 +80,3 @@ export function RaidItemRow({
     </div>
   );
 }
-

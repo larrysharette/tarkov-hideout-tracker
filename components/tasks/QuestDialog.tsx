@@ -16,8 +16,8 @@ import {
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { useQuest } from "@/contexts/QuestContext";
-import { useHideout } from "@/contexts/HideoutContext";
+import { useQuest } from "@/hooks/use-quest";
+import { useTaskWatchlist } from "@/hooks/use-task-watchlist";
 import {
   IconArrowRight,
   IconArrowRightFromArc,
@@ -84,7 +84,7 @@ export function QuestDialog({
   const { isQuestCompleted, toggleQuestCompletion, markQuestsAsCompleted } =
     useQuest();
   const { addTaskToWatchlist, removeTaskFromWatchlist, isTaskInWatchlist } =
-    useHideout();
+    useTaskWatchlist();
 
   // Get quests that this quest unlocks
   const getUnlockedQuests = useCallback(

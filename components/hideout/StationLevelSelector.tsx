@@ -1,6 +1,6 @@
 "use client";
 
-import { useHideout } from "@/contexts/HideoutContext";
+import { useStationLevels } from "@/hooks/use-station-levels";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -11,8 +11,8 @@ import {
 } from "@/components/ui/select";
 
 export function StationLevelSelector() {
-  const { hideoutData, isLoading, error, userState, setStationLevel } =
-    useHideout();
+  const { hideoutData, isLoading, getStationLevel, setStationLevel } =
+    useStationLevels();
 
   if (isLoading) {
     return (
@@ -20,17 +20,6 @@ export function StationLevelSelector() {
         <div>
           <h2 className="text-xl font-semibold mb-1">Hideout Levels</h2>
           <p className="text-muted-foreground text-sm">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="space-y-4">
-        <div>
-          <h2 className="text-xl font-semibold mb-1">Hideout Levels</h2>
-          <p className="text-destructive text-sm">Error: {error}</p>
         </div>
       </div>
     );
@@ -54,7 +43,7 @@ export function StationLevelSelector() {
             ...station.levels.map((level) => level.level),
             0
           );
-          const currentLevel = userState.stationLevels[station.id] || 0;
+          const currentLevel = getStationLevel(station.id);
 
           return (
             <div key={station.id} className="flex flex-col items-center gap-2">

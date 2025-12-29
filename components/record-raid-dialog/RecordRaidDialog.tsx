@@ -1,7 +1,15 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { useHideout } from "@/contexts/HideoutContext";
+import { useState, useCallback, useMemo } from "react";
+import { useLiveQuery } from "dexie-react-hooks";
+import { db } from "@/lib/db/index";
+import { getHideoutData, getUserHideoutState } from "@/lib/db/queries";
+import { useInventory } from "@/hooks/use-inventory";
+import { useQuest } from "@/hooks/use-quest";
+import type {
+  UserHideoutState,
+  TransformedHideoutData,
+} from "@/lib/types/hideout";
 import {
   Dialog,
   DialogContent,
@@ -25,12 +33,70 @@ export function RecordRaidDialog() {
   const [showSummary, setShowSummary] = useState(false);
   const [summary, setSummary] = useState<RaidSummary | null>(null);
 
-  const {
-    setInventoryQuantity,
-    userState,
-    hideoutData,
-    markQuestsAsCompleted,
-  } = useHideout();
+  const { inventory, setInventoryQuantity } = useInventory();
+  const { allTasks, markQuestsAsCompleted } = useQuest();
+
+  // Query stations and general info for userState reconstruction
+  const stations = useLiveQuery(() => db.stations.toArray(), []);
+  const generalInfo = useLiveQuery(
+    () => db.generalInformation.get("general"),
+    []
+  );
+  const inventoryRecords = useLiveQuery(() => db.inventory.toArray(), []);
+
+  // Get hideout data
+  const hideoutData = useLiveQuery(async () => {
+    if (!stations) return null;
+    return await getHideoutData();
+  }, [stations]) as TransformedHideoutData | null;
+
+  // Reconstruct userState from individual hooks and queries
+  const userState = useMemo((): UserHideoutState | null => {
+    if (!stations || !generalInfo || !inventoryRecords || !allTasks)
+      return null;
+
+    // Build stationLevels map
+    const stationLevels: Record<string, number> = {};
+    for (const station of stations) {
+      if (station.currentLevel > 0) {
+        stationLevels[station.id] = station.currentLevel;
+      }
+    }
+
+    // Build traderLevels map
+    const traderLevels: Record<string, number> = {};
+    if (generalInfo.traders) {
+      for (const trader of generalInfo.traders) {
+        if (trader.level > 0) {
+          traderLevels[trader.name] = trader.level;
+        }
+      }
+    }
+
+    // Build completedQuests array from allTasks
+    const completedQuestsArray = allTasks
+      .filter((t) => t.isCompleted)
+      .map((t) => t.id);
+
+    // Build watchlist map
+    const watchlist: Record<string, number> = {};
+    for (const item of inventoryRecords) {
+      if (item.isWatchlisted && item.quantityNeeded > 0) {
+        watchlist[item.name] = item.quantityNeeded;
+      }
+    }
+
+    return {
+      stationLevels,
+      inventory,
+      focusedUpgrades: [], // Not needed for calculateRaidSummary
+      traderLevels,
+      completedQuests: completedQuestsArray,
+      watchlist: Object.keys(watchlist).length > 0 ? watchlist : undefined,
+      taskWatchlist: undefined, // Not needed for calculateRaidSummary
+      playerLevel: generalInfo.playerLevel ?? 1,
+    };
+  }, [stations, generalInfo, inventoryRecords, inventory, allTasks]);
 
   // Custom hooks
   const { items, tasks, isLoadingItems } = useRaidData(open);
@@ -46,6 +112,7 @@ export function RecordRaidDialog() {
 
   // Calculate summary
   const calculateSummary = useCallback((): RaidSummary | null => {
+    if (!userState || !hideoutData) return null;
     return calculateRaidSummary(
       raidItems,
       selectedTasks,
@@ -61,7 +128,7 @@ export function RecordRaidDialog() {
     // Update inventory for each item
     raidItems.forEach((raidItem) => {
       if (raidItem.item && raidItem.quantity > 0) {
-        const currentQuantity = userState.inventory[raidItem.item.name] || 0;
+        const currentQuantity = inventory[raidItem.item.name] || 0;
         setInventoryQuantity(
           raidItem.item.name,
           currentQuantity + raidItem.quantity
@@ -84,8 +151,8 @@ export function RecordRaidDialog() {
     }
   }, [
     raidItems,
+    inventory,
     setInventoryQuantity,
-    userState.inventory,
     calculateSummary,
     getCompletedTaskIds,
     markQuestsAsCompleted,
@@ -119,7 +186,7 @@ export function RecordRaidDialog() {
             tasks={tasks}
             raidItems={raidItems}
             selectedTasks={selectedTasks}
-            playerLevel={userState.playerLevel || 1}
+            playerLevel={userState?.playerLevel || 1}
             onAddItem={addItem}
             onUpdateItem={updateItem}
             onRemoveItem={removeItem}

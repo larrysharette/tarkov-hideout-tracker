@@ -1,37 +1,116 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { useHideout } from "@/contexts/HideoutContext";
+import { useMemo, useState, useCallback } from "react";
+import { useLiveQuery } from "dexie-react-hooks";
+import { db } from "@/lib/db/index";
+import { useStationLevels } from "@/hooks/use-station-levels";
+import { useInventory } from "@/hooks/use-inventory";
+import { usePlayerInfo } from "@/hooks/use-player-info";
+import { useQuest } from "@/hooks/use-quest";
+import {
+  toggleFocusedUpgrade as toggleFocusedUpgradeDb,
+  clearFocusedUpgrades as clearFocusedUpgradesDb,
+  purchaseUpgrade as purchaseUpgradeDb,
+} from "@/lib/db/updates";
+import {
+  getAvailableUpgrades,
+  getFocusedUpgrades,
+  isUpgradeAvailable,
+} from "@/lib/utils/hideout-calculations";
 import { Button } from "@/components/ui/button";
 import { UpgradeCard } from "./UpgradeCard";
 import { getUpgradeKey } from "@/lib/utils/hideout-data";
-import { isUpgradeAvailable } from "@/lib/utils/hideout-calculations";
 import { useFuzzySearch } from "@/hooks/use-fuzzy-search";
 import { SearchInput } from "@/components/ui/search-input";
+import type { UserHideoutState, StationLevel } from "@/lib/types/hideout";
 
 export function UpgradeFocusManager() {
   const {
     hideoutData,
-    isLoading,
-    error,
-    userState,
-    toggleFocusedUpgrade,
-    clearFocusedUpgrades,
-    getAvailableUpgrades,
-    purchaseUpgrade,
-  } = useHideout();
+    isLoading: isLoadingStations,
+    stationLevels,
+  } = useStationLevels();
+  const { inventory } = useInventory();
+  const { traderLevels, playerLevel } = usePlayerInfo();
+  const { allTasks } = useQuest();
+
+  // Query stations to get focused upgrades
+  const stations = useLiveQuery(() => db.stations.toArray(), []);
 
   const [showAvailableOnly, setShowAvailableOnly] = useState(false);
 
+  // Reconstruct userState from individual hooks
+  const userState = useMemo((): UserHideoutState | null => {
+    if (!stations || !allTasks) return null;
+
+    // Build focusedUpgrades array
+    const focusedUpgradesArray: string[] = [];
+    for (const station of stations) {
+      for (const level of station.levels) {
+        if (level.isFocused) {
+          focusedUpgradesArray.push(getUpgradeKey(station.id, level.level));
+        }
+      }
+    }
+
+    // Build completedQuests array
+    const completedQuestsArray = allTasks
+      .filter((t) => t.isCompleted)
+      .map((t) => t.id);
+
+    return {
+      stationLevels,
+      inventory,
+      focusedUpgrades: focusedUpgradesArray,
+      traderLevels,
+      completedQuests: completedQuestsArray,
+      playerLevel: playerLevel ?? 1,
+    };
+  }, [stations, stationLevels, inventory, traderLevels, allTasks, playerLevel]);
+
+  // Compute available upgrades
   const availableUpgrades = useMemo(() => {
-    if (!hideoutData) return [];
-    return getAvailableUpgrades();
-  }, [
-    hideoutData,
-    userState.stationLevels,
-    userState.traderLevels,
-    getAvailableUpgrades,
-  ]);
+    if (!hideoutData || !userState) return [];
+    return getAvailableUpgrades(hideoutData, userState);
+  }, [hideoutData, userState]);
+
+  // Compute focused upgrades
+  const focusedUpgrades = useMemo(() => {
+    if (!hideoutData || !userState) return [];
+    return getFocusedUpgrades(hideoutData, userState);
+  }, [hideoutData, userState]);
+
+  // Toggle focused upgrade
+  const toggleFocusedUpgrade = useCallback(
+    async (stationId: string, level: number) => {
+      try {
+        await toggleFocusedUpgradeDb(stationId, level);
+      } catch (err) {
+        console.error("Error toggling focused upgrade:", err);
+      }
+    },
+    []
+  );
+
+  // Clear all focused upgrades
+  const clearFocusedUpgrades = useCallback(async () => {
+    try {
+      await clearFocusedUpgradesDb();
+    } catch (err) {
+      console.error("Error clearing focused upgrades:", err);
+    }
+  }, []);
+
+  // Purchase upgrade
+  const purchaseUpgrade = useCallback(async (upgrade: StationLevel) => {
+    try {
+      await purchaseUpgradeDb(upgrade);
+    } catch (err) {
+      console.error("Error purchasing upgrade:", err);
+    }
+  }, []);
+
+  const isLoading = isLoadingStations || !userState;
 
   const allUpgrades = useMemo(() => {
     if (!hideoutData) return [];
@@ -41,10 +120,10 @@ export function UpgradeFocusManager() {
     }
     // Filter out upgrades that have already been purchased
     return upgrades.filter((upgrade) => {
-      const userCurrentLevel = userState.stationLevels[upgrade.stationId] || 0;
+      const userCurrentLevel = stationLevels[upgrade.stationId] || 0;
       return userCurrentLevel < upgrade.level;
     });
-  }, [hideoutData, userState.stationLevels]);
+  }, [hideoutData, stationLevels]);
 
   // Fuzzy search for upgrades
   const {
@@ -91,7 +170,7 @@ export function UpgradeFocusManager() {
     return grouped;
   }, [fuzzySearchUpgrades]);
 
-  const focusedCount = userState.focusedUpgrades.length;
+  const focusedCount = userState?.focusedUpgrades.length ?? 0;
 
   if (isLoading) {
     return (
@@ -104,18 +183,7 @@ export function UpgradeFocusManager() {
     );
   }
 
-  if (error) {
-    return (
-      <div className="space-y-4">
-        <div>
-          <h2 className="text-xl font-semibold mb-1">Upgrade Focus</h2>
-          <p className="text-destructive text-sm">Error: {error}</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!hideoutData) {
+  if (!hideoutData || !userState) {
     return null;
   }
 
@@ -178,11 +246,10 @@ export function UpgradeFocusManager() {
                           upgrade.level
                         );
                         const isFocused =
-                          userState.focusedUpgrades.includes(key);
-                        const isAvailable = isUpgradeAvailable(
-                          upgrade,
-                          userState
-                        );
+                          userState?.focusedUpgrades.includes(key) ?? false;
+                        const isAvailable = userState
+                          ? isUpgradeAvailable(upgrade, userState)
+                          : false;
 
                         return (
                           <UpgradeCard

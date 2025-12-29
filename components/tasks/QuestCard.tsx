@@ -3,7 +3,7 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useQuest } from "@/contexts/QuestContext";
+import { useQuest } from "@/hooks/use-quest";
 import type { Task } from "@/lib/types/tasks";
 
 interface QuestCardProps {

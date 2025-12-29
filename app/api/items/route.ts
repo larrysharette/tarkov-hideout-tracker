@@ -1,3 +1,4 @@
+import { GraphQLItemsResponse, Item } from "@/lib/types/item";
 import { NextResponse } from "next/server";
 
 // Revalidate every 24 hours (86400 seconds)
@@ -7,7 +8,7 @@ const GRAPHQL_ENDPOINT = "https://api.tarkov.dev/graphql";
 
 const ITEMS_QUERY = `
   query {
-    items(types: [barter, meds, keys, injectors], lang: en) {
+    items(types: [barter, meds, keys, injectors, noFlea], lang: en) {
       id
       name
       iconLink
@@ -46,91 +47,6 @@ const ITEMS_QUERY = `
     }
   }
 `;
-
-export interface GraphQLItemsResponse {
-  data?: {
-    items: Array<{
-      id: string;
-      name: string;
-      iconLink: string;
-      wikiLink: string;
-      usedInTasks: Array<{
-        id: string;
-        name: string;
-      }>;
-      craftsFor: Array<{
-        id: string;
-        station: {
-          name: string;
-        };
-        requiredItems: Array<{
-          item: {
-            id: string;
-            name: string;
-            iconLink: string;
-          };
-          count: number;
-        }>;
-      }>;
-      craftsUsing: Array<{
-        id: string;
-        station: {
-          name: string;
-        };
-        rewardItems: Array<{
-          count: number;
-          item: {
-            name: string;
-            id: string;
-          };
-        }>;
-      }>;
-    }>;
-  };
-  errors?: Array<{
-    message: string;
-    locations?: Array<{ line: number; column: number }>;
-    path?: Array<string | number>;
-  }>;
-}
-
-export interface Item {
-  id: string;
-  name: string;
-  iconLink: string;
-  wikiLink: string;
-  usedInTasks: Array<{
-    id: string;
-    name: string;
-  }>;
-  craftsFor: Array<{
-    id: string;
-    station: {
-      name: string;
-    };
-    requiredItems: Array<{
-      item: {
-        id: string;
-        name: string;
-        iconLink: string;
-      };
-      count: number;
-    }>;
-  }>;
-  craftsUsing: Array<{
-    id: string;
-    station: {
-      name: string;
-    };
-    rewardItems: Array<{
-      count: number;
-      item: {
-        name: string;
-        id: string;
-      };
-    }>;
-  }>;
-}
 
 export async function GET() {
   try {

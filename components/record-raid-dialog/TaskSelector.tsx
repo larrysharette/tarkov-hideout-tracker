@@ -16,7 +16,7 @@ import {
 import { IconX } from "@tabler/icons-react";
 import type { Task } from "@/lib/types/tasks";
 import type { SelectedTask } from "./types";
-import { useQuest } from "@/contexts/QuestContext";
+import { useQuest } from "@/hooks/use-quest";
 
 interface TaskSelectorProps {
   tasks: Task[];

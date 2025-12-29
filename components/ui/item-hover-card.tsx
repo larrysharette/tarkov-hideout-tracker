@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import { IconExternalLink, IconEye } from "@tabler/icons-react";
-import type { Item } from "@/app/api/items/route";
+import type { Item } from "@/lib/types/item";
 
 interface ItemHoverCardProps {
   itemName: string;

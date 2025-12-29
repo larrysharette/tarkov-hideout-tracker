@@ -1,7 +1,9 @@
 "use client";
 
-import { useMemo, useState, useEffect, useCallback } from "react";
-import { useHideout } from "@/contexts/HideoutContext";
+import { useMemo, useState, useCallback } from "react";
+import { useInventory } from "@/hooks/use-inventory";
+import { useLiveQuery } from "dexie-react-hooks";
+import { db, InventoryRecord } from "@/lib/db/index";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -15,14 +17,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import {
-  Combobox,
-  ComboboxContent,
-  ComboboxEmpty,
-  ComboboxInput,
-  ComboboxItem,
-  ComboboxList,
-} from "@/components/ui/combobox";
+import { ItemSelector } from "@/components/ui/item-selector";
 import { ItemHoverCard } from "@/components/ui/item-hover-card";
 import {
   IconExternalLink,
@@ -34,8 +29,7 @@ import {
 } from "@tabler/icons-react";
 import { useFuzzySearch } from "@/hooks/use-fuzzy-search";
 import { SearchInput } from "@/components/ui/search-input";
-import type { Item } from "@/app/api/items/route";
-import { addVersionToApiUrl } from "@/lib/utils/version";
+import type { Item } from "@/lib/types/item";
 
 function formatNumber(num: number): string {
   return num.toLocaleString("en-US");
@@ -50,62 +44,33 @@ interface WatchlistItem {
 export function WatchlistView() {
   const {
     isLoading,
-    error,
-    userState,
     addToWatchlist,
     setWatchlistQuantity,
     removeFromWatchlist,
-  } = useHideout();
-  const [items, setItems] = useState<Item[]>([]);
-  const [isLoadingItems, setIsLoadingItems] = useState(false);
+    inventoryItems,
+    inventory,
+  } = useInventory();
+
+  // Query all items from Dexie for item metadata
+  const watchlistItems = useLiveQuery(
+    () => db.inventory.where("quantityNeeded").above(0).toArray(),
+    [],
+    [] as InventoryRecord[]
+  );
+
   const [quickAddItem, setQuickAddItem] = useState<string>("");
   const [quickAddQuantity, setQuickAddQuantity] = useState<number>(1);
   const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
 
-  // Fetch items from API for icons
-  useEffect(() => {
-    setIsLoadingItems(true);
-    fetch(addVersionToApiUrl("/api/items"))
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error("Failed to fetch items");
-        }
-        return res.json();
-      })
-      .then((data: Item[]) => {
-        setItems(data);
-      })
-      .catch((error) => {
-        console.error("Error fetching items:", error);
-      })
-      .finally(() => {
-        setIsLoadingItems(false);
-      });
-  }, []);
-
   // Create a map of item names to item data for quick lookup
   const itemsMap = useMemo(() => {
+    if (!watchlistItems) return new Map<string, Item>();
     const map = new Map<string, Item>();
-    items.forEach((item) => {
+    watchlistItems.forEach((item) => {
       map.set(item.name, item);
     });
     return map;
-  }, [items]);
-
-  // Get watchlist items with item data
-  const watchlistItems = useMemo((): WatchlistItem[] => {
-    return Object.entries(userState.watchlist || {})
-      .filter(([name, quantity]) => quantity > 0)
-      .map(([name, quantity]) => ({
-        name,
-        quantity,
-        itemData: itemsMap.get(name),
-      }))
-      .sort((a, b) => {
-        // Sort by name alphabetically
-        return a.name.localeCompare(b.name);
-      });
-  }, [userState.watchlist, itemsMap]);
+  }, [watchlistItems]);
 
   // Fuzzy search for watchlist items
   const {
@@ -117,17 +82,11 @@ export function WatchlistView() {
     minMatchCharLength: 2,
   });
 
-  // Convert fuzzy search results back to WatchlistItem[]
-  const fuzzySearchItems = useMemo(() => {
-    if (!searchQuery.trim()) return watchlistItems;
-    return fuzzySearchResults as unknown as WatchlistItem[];
-  }, [searchQuery, fuzzySearchResults, watchlistItems]);
-
   // Filter watchlist items by search query
   const filteredItems = useMemo(() => {
     // Start with fuzzy search results if searching, otherwise use all items
-    return searchQuery.trim() ? fuzzySearchItems : watchlistItems;
-  }, [watchlistItems, fuzzySearchItems, searchQuery]);
+    return searchQuery.trim() ? fuzzySearchResults : watchlistItems;
+  }, [watchlistItems, fuzzySearchResults, searchQuery]);
 
   const handleQuantityChange = useCallback(
     (itemName: string, newQuantity: number) => {
@@ -143,37 +102,43 @@ export function WatchlistView() {
     [removeFromWatchlist]
   );
 
-  const handleQuickAdd = useCallback(() => {
+  const handleQuickAdd = useCallback(async () => {
     if (quickAddItem) {
-      addToWatchlist(quickAddItem, quickAddQuantity);
-      setQuickAddItem("");
-      setQuickAddQuantity(1);
+      try {
+        await addToWatchlist(quickAddItem, quickAddQuantity);
+        setQuickAddItem("");
+        setQuickAddQuantity(1);
+      } catch (err) {
+        console.error("Error adding item to watchlist:", err);
+        // Optionally show user feedback here
+      }
     }
   }, [quickAddItem, quickAddQuantity, addToWatchlist]);
 
   const handleRemoveAllCompleted = useCallback(() => {
     const completedItems = watchlistItems.filter((item) => {
-      const inventoryQuantity = userState.inventory[item.name] || 0;
-      return inventoryQuantity >= item.quantity;
+      const inventoryQuantity = inventory[item.name] || 0;
+      return inventoryQuantity >= item.quantityNeeded;
     });
 
     completedItems.forEach((item) => {
       removeFromWatchlist(item.name);
     });
-  }, [watchlistItems, userState.inventory, removeFromWatchlist]);
+  }, [watchlistItems, inventory, removeFromWatchlist]);
 
   // Calculate completed items count
   const completedItemsCount = useMemo(() => {
     return watchlistItems.filter((item) => {
-      const inventoryQuantity = userState.inventory[item.name] || 0;
-      return inventoryQuantity >= item.quantity;
+      const inventoryQuantity = inventory[item.name] || 0;
+      return inventoryQuantity >= item.quantityNeeded;
     }).length;
-  }, [watchlistItems, userState.inventory]);
+  }, [watchlistItems, inventory]);
 
   // Get item names for quick add combobox
   const itemNames = useMemo(() => {
-    return items.map((item) => item.name).sort();
-  }, [items]);
+    if (!watchlistItems) return [];
+    return watchlistItems.map((item) => item.name).sort();
+  }, [watchlistItems]);
 
   if (isLoading) {
     return (
@@ -186,20 +151,9 @@ export function WatchlistView() {
     );
   }
 
-  if (error) {
-    return (
-      <div className="space-y-4">
-        <div>
-          <h1 className="text-3xl font-bold mb-2">Watchlist</h1>
-          <p className="text-destructive text-sm">Error: {error}</p>
-        </div>
-      </div>
-    );
-  }
-
   const totalItems = watchlistItems.length;
   const totalQuantity = watchlistItems.reduce(
-    (sum, item) => sum + item.quantity,
+    (sum, item) => sum + item.quantityNeeded,
     0
   );
 
@@ -213,43 +167,13 @@ export function WatchlistView() {
               <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
                 Quick Add Item
               </label>
-              <Combobox
-                items={itemNames}
+              <ItemSelector
+                items={watchlistItems || []}
+                itemNames={itemNames}
                 value={quickAddItem}
                 onValueChange={(value) => setQuickAddItem(value || "")}
-                limit={10}
-              >
-                <ComboboxInput
-                  showClear
-                  placeholder="Search for an item..."
-                  className="w-full"
-                />
-                <ComboboxContent>
-                  <ComboboxEmpty>No items found.</ComboboxEmpty>
-                  <ComboboxList>
-                    {(itemName) => {
-                      const item = items.find((i) => i.name === itemName);
-                      return (
-                        <ComboboxItem
-                          key={item?.id ?? itemName}
-                          value={itemName}
-                        >
-                          <div className="flex items-center gap-2">
-                            {item?.iconLink && (
-                              <img
-                                src={item.iconLink}
-                                alt={itemName}
-                                className="w-5 h-5 object-contain"
-                              />
-                            )}
-                            <span>{itemName}</span>
-                          </div>
-                        </ComboboxItem>
-                      );
-                    }}
-                  </ComboboxList>
-                </ComboboxContent>
-              </Combobox>
+                placeholder="Search for an item..."
+              />
             </div>
             <div className="w-full sm:w-24">
               <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
@@ -370,10 +294,10 @@ export function WatchlistView() {
         /* Grid View */
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {filteredItems.map((watchlistItem) => {
-            const iconElement = watchlistItem.itemData?.iconLink ? (
+            const iconElement = watchlistItem.iconLink ? (
               <div className="shrink-0 cursor-pointer">
                 <img
-                  src={watchlistItem.itemData.iconLink}
+                  src={watchlistItem.iconLink}
                   alt={watchlistItem.name}
                   className="w-12 h-12 object-contain"
                 />
@@ -384,11 +308,10 @@ export function WatchlistView() {
               </div>
             );
 
-            const inventoryQuantity =
-              userState.inventory[watchlistItem.name] || 0;
+            const inventoryQuantity = inventory[watchlistItem.name] || 0;
             const remaining = Math.max(
               0,
-              watchlistItem.quantity - inventoryQuantity
+              watchlistItem.quantityNeeded - inventoryQuantity
             );
 
             return (
@@ -401,7 +324,7 @@ export function WatchlistView() {
                     {/* Item Icon */}
                     <ItemHoverCard
                       itemName={watchlistItem.name}
-                      itemData={watchlistItem.itemData}
+                      itemData={watchlistItem}
                       iconElement={iconElement}
                     />
 
@@ -411,9 +334,9 @@ export function WatchlistView() {
                         <h3 className="font-medium text-sm leading-tight line-clamp-2 flex-1">
                           {watchlistItem.name}
                         </h3>
-                        {watchlistItem.itemData?.wikiLink && (
+                        {watchlistItem.wikiLink && (
                           <a
-                            href={watchlistItem.itemData.wikiLink}
+                            href={watchlistItem.wikiLink}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="shrink-0 text-muted-foreground hover:text-foreground transition-colors"
@@ -432,13 +355,13 @@ export function WatchlistView() {
                         <div className="flex items-center gap-1">
                           <span className="text-muted-foreground">Needed:</span>
                           <span className="font-medium">
-                            {formatNumber(watchlistItem.quantity)}
+                            {formatNumber(watchlistItem.quantityNeeded)}
                           </span>
                         </div>
                         <div className="flex items-center gap-1">
                           <span className="text-muted-foreground">Owned:</span>
                           <span className="font-medium">
-                            {formatNumber(inventoryQuantity)}
+                            {formatNumber(watchlistItem.quantityOwned)}
                           </span>
                         </div>
                         <div className="flex items-center gap-1">
@@ -461,7 +384,7 @@ export function WatchlistView() {
                         <Input
                           type="number"
                           min="0"
-                          value={watchlistItem.quantity || ""}
+                          value={watchlistItem.quantityNeeded || ""}
                           onChange={(e) => {
                             const value = parseInt(e.target.value, 10) || 0;
                             handleQuantityChange(watchlistItem.name, value);
@@ -506,10 +429,10 @@ export function WatchlistView() {
             </TableHeader>
             <TableBody>
               {filteredItems.map((watchlistItem) => {
-                const iconElement = watchlistItem.itemData?.iconLink ? (
+                const iconElement = watchlistItem.iconLink ? (
                   <div className="shrink-0 cursor-pointer">
                     <img
-                      src={watchlistItem.itemData.iconLink}
+                      src={watchlistItem.iconLink}
                       alt={watchlistItem.name}
                       className="w-8 h-8 object-contain"
                     />
@@ -520,11 +443,10 @@ export function WatchlistView() {
                   </div>
                 );
 
-                const inventoryQuantity =
-                  userState.inventory[watchlistItem.name] || 0;
+                const inventoryQuantity = inventory[watchlistItem.name] || 0;
                 const remaining = Math.max(
                   0,
-                  watchlistItem.quantity - inventoryQuantity
+                  watchlistItem.quantityNeeded - inventoryQuantity
                 );
 
                 return (
@@ -532,7 +454,7 @@ export function WatchlistView() {
                     <TableCell>
                       <ItemHoverCard
                         itemName={watchlistItem.name}
-                        itemData={watchlistItem.itemData}
+                        itemData={watchlistItem}
                         iconElement={iconElement}
                       />
                     </TableCell>
@@ -541,9 +463,9 @@ export function WatchlistView() {
                         <span className="wrap-break-word">
                           {watchlistItem.name}
                         </span>
-                        {watchlistItem.itemData?.wikiLink && (
+                        {watchlistItem.wikiLink && (
                           <a
-                            href={watchlistItem.itemData.wikiLink}
+                            href={watchlistItem.wikiLink}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="shrink-0 text-muted-foreground hover:text-foreground transition-colors"
@@ -562,10 +484,10 @@ export function WatchlistView() {
                       </div>
                     </TableCell>
                     <TableCell className="text-right font-medium">
-                      {formatNumber(watchlistItem.quantity)}
+                      {formatNumber(watchlistItem.quantityNeeded)}
                     </TableCell>
                     <TableCell className="text-right">
-                      {formatNumber(inventoryQuantity)}
+                      {formatNumber(watchlistItem.quantityOwned)}
                     </TableCell>
                     <TableCell className="text-right">
                       <Badge
@@ -579,7 +501,7 @@ export function WatchlistView() {
                       <Input
                         type="number"
                         min="0"
-                        value={watchlistItem.quantity || ""}
+                        value={watchlistItem.quantityNeeded || ""}
                         onChange={(e) => {
                           const value = parseInt(e.target.value, 10) || 0;
                           handleQuantityChange(watchlistItem.name, value);

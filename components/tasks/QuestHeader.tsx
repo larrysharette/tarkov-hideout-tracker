@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import type { Task } from "@/lib/types/tasks";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
-import { useQuest } from "@/contexts/QuestContext";
+import { useQuest } from "@/hooks/use-quest";
 
 interface QuestHeaderProps {
   tasks: Task[];

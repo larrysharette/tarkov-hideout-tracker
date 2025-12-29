@@ -24,13 +24,14 @@ export function ExportDialog({ open, onOpenChange }: ExportDialogProps) {
 
   useEffect(() => {
     if (open) {
-      const data = exportCurrentState();
-      if (data) {
-        setExportData(data);
-      } else {
-        setExportData("");
-      }
-      setCopied(false);
+      exportCurrentState().then((data) => {
+        if (data) {
+          setExportData(data);
+        } else {
+          setExportData("");
+        }
+        setCopied(false);
+      });
     }
   }, [open]);
 

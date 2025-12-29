@@ -1,7 +1,10 @@
 "use client";
 
 import { useMemo, useState, useEffect, useCallback } from "react";
-import { useHideout } from "@/contexts/HideoutContext";
+import { useLiveQuery } from "dexie-react-hooks";
+import { db } from "@/lib/db/index";
+import { useInventory } from "@/hooks/use-inventory";
+import { useTaskWatchlist } from "@/hooks/use-task-watchlist";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -28,7 +31,7 @@ import {
 } from "@/components/ui/accordion";
 import { IconExternalLink, IconWorld } from "@tabler/icons-react";
 import type { Task } from "@/lib/types/tasks";
-import type { Item } from "@/app/api/items/route";
+import type { Item } from "@/lib/types/item";
 import { toSnakeCase } from "@/lib/utils";
 import { ItemHoverCard } from "@/components/ui/item-hover-card";
 import { addVersionToApiUrl } from "@/lib/utils/version";
@@ -46,11 +49,19 @@ interface WatchlistItem {
 }
 
 export default function WatchlistOverviewPage() {
-  const { isLoading, error, userState } = useHideout();
+  const { inventory, isLoading: isLoadingInventory } = useInventory();
+  const { taskWatchlist, isLoading: isLoadingTasks } = useTaskWatchlist();
+
+  // Query inventory records for watchlist items
+  const inventoryRecords = useLiveQuery(() => db.inventory.toArray(), []);
+
   const [tasks, setTasks] = useState<Task[]>([]);
   const [items, setItems] = useState<Item[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(false);
   const [selectedMap, setSelectedMap] = useState<string | null>(null);
+
+  const isLoading =
+    isLoadingInventory || isLoadingTasks || inventoryRecords === undefined;
 
   // Fetch tasks and items from API
   useEffect(() => {
@@ -90,9 +101,8 @@ export default function WatchlistOverviewPage() {
 
   // Get watchlist tasks
   const watchlistTasks = useMemo((): Task[] => {
-    const taskWatchlist = userState.taskWatchlist || [];
     return tasks.filter((task) => taskWatchlist.includes(task.id));
-  }, [userState.taskWatchlist, tasks]);
+  }, [taskWatchlist, tasks]);
 
   // Filter tasks by selected map
   const filteredTasks = useMemo(() => {
@@ -132,20 +142,22 @@ export default function WatchlistOverviewPage() {
 
   // Get watchlist items
   const watchlistItems = useMemo((): WatchlistItem[] => {
+    if (!inventoryRecords) return [];
+
     const itemsMap = new Map<string, Item>();
     items.forEach((item) => {
       itemsMap.set(item.name, item);
     });
 
-    return Object.entries(userState.watchlist || {})
-      .filter(([name, quantity]) => quantity > 0)
-      .map(([name, quantity]) => ({
-        name,
-        quantity,
-        itemData: itemsMap.get(name),
+    return inventoryRecords
+      .filter((item) => item.isWatchlisted && item.quantityNeeded > 0)
+      .map((item) => ({
+        name: item.name,
+        quantity: item.quantityNeeded,
+        itemData: itemsMap.get(item.name),
       }))
       .sort((a, b) => a.name.localeCompare(b.name));
-  }, [userState.watchlist, items]);
+  }, [inventoryRecords, items]);
 
   // Filter items by selected map (for now, show all items - can be enhanced later)
   const filteredItems = useMemo(() => {
@@ -176,19 +188,6 @@ export default function WatchlistOverviewPage() {
           <div>
             <h1 className="text-3xl font-bold mb-2">Watchlist Overview</h1>
             <p className="text-muted-foreground">Loading...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="container mx-auto p-4 md:p-6 max-w-7xl">
-        <div className="space-y-4">
-          <div>
-            <h1 className="text-3xl font-bold mb-2">Watchlist Overview</h1>
-            <p className="text-destructive text-sm">Error: {error}</p>
           </div>
         </div>
       </div>
@@ -404,7 +403,7 @@ export default function WatchlistOverviewPage() {
                             );
 
                             const inventoryQuantity =
-                              userState.inventory[watchlistItem.name] || 0;
+                              inventory[watchlistItem.name] || 0;
 
                             return (
                               <TableRow key={watchlistItem.name}>

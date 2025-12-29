@@ -15,6 +15,7 @@ const HIDEOUT_QUERY = `
     hideoutStations {
       id
       name
+      imageLink
       levels {
         itemRequirements {
           count
@@ -37,7 +38,6 @@ const HIDEOUT_QUERY = `
           }
         }
       }
-      imageLink
     }
   }
 `;

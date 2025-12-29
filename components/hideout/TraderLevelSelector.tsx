@@ -1,6 +1,7 @@
 "use client";
 
-import { useHideout } from "@/contexts/HideoutContext";
+import { useTraders } from "@/hooks/use-traders";
+import { usePlayerInfo } from "@/hooks/use-player-info";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -11,8 +12,8 @@ import {
 } from "@/components/ui/select";
 
 export function TraderLevelSelector() {
-  const { tradersData, isLoading, error, userState, setTraderLevel } =
-    useHideout();
+  const { tradersData, isLoading, getTraderLevel } = useTraders();
+  const { setTraderLevel } = usePlayerInfo();
 
   if (isLoading) {
     return (
@@ -20,17 +21,6 @@ export function TraderLevelSelector() {
         <div>
           <h2 className="text-xl font-semibold mb-1">Trader Loyalty Levels</h2>
           <p className="text-muted-foreground text-sm">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="space-y-4">
-        <div>
-          <h2 className="text-xl font-semibold mb-1">Trader Loyalty Levels</h2>
-          <p className="text-destructive text-sm">Error: {error}</p>
         </div>
       </div>
     );
@@ -50,7 +40,7 @@ export function TraderLevelSelector() {
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 xl:grid-cols-8 gap-4 items-end">
         {tradersData.traders.map((trader) => {
-          const currentLevel = userState.traderLevels?.[trader.name] || 0;
+          const currentLevel = getTraderLevel(trader.name);
 
           return (
             <div

@@ -21,8 +21,8 @@ import {
   MenubarRadioGroup,
   MenubarRadioItem,
 } from "@/components/ui/menubar";
-import { useQuest } from "@/contexts/QuestContext";
-import { useHideout } from "@/contexts/HideoutContext";
+import { useQuest } from "@/hooks/use-quest";
+import { usePlayerInfo } from "@/hooks/use-player-info";
 import { QuestCard } from "./QuestCard";
 import { QuestDialog } from "./QuestDialog";
 import { SearchInput } from "../ui/search-input";
@@ -44,9 +44,8 @@ type QuestFilter = {
 
 export default function QuestVisualization({ tasks }: QuestVisualizationProps) {
   const { isQuestCompleted } = useQuest();
-  const { userState, setPlayerLevel } = useHideout();
+  const { playerLevel, setPlayerLevel } = usePlayerInfo();
   const [selectedQuest, setSelectedQuest] = useState<Task | null>(null);
-  const playerLevel = userState.playerLevel || 1;
   const [filter, setFilter] = useState<Omit<QuestFilter, "searchQuery">>({
     requirement: "all",
     status: "available",

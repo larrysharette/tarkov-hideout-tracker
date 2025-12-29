@@ -1,3 +1,4 @@
+import { Task } from "@/lib/types/tasks";
 import { NextResponse } from "next/server";
 
 // Revalidate every 24 hours (86400 seconds)
@@ -49,54 +50,6 @@ const TASKS_QUERY = `
     }
   }
 `;
-
-export interface TaskKey {
-  id: string;
-  imageLink: string;
-  name: string;
-}
-
-export interface TaskMap {
-  id: string;
-  name: string;
-}
-
-export interface TaskTrader {
-  id: string;
-  name: string;
-  imageLink: string;
-}
-
-export interface TaskRequirement {
-  task: {
-    map: TaskMap | null;
-    name: string;
-    id: string;
-    minPlayerLevel: number | null;
-  };
-}
-
-export interface TaskObjective {
-  description: string;
-  type: string;
-}
-
-export interface Task {
-  id: string;
-  wikiLink: string;
-  name: string;
-  neededKeys: Array<{
-    keys: TaskKey[];
-  }> | null;
-  kappaRequired: boolean;
-  lightkeeperRequired: boolean;
-  minPlayerLevel: number | null;
-  trader: TaskTrader | null;
-  taskRequirements: TaskRequirement[];
-  taskImageLink: string | null;
-  map: TaskMap | null;
-  objectives: TaskObjective[];
-}
 
 export interface GraphQLTasksResponse {
   data?: {

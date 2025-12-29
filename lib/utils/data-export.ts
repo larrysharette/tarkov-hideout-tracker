@@ -1,5 +1,13 @@
 import * as yaml from "yaml";
-import type { StoredState } from "@/contexts/HideoutContext";
+import type { UserHideoutState } from "@/lib/types/hideout";
+import { getUserHideoutState } from "@/lib/db/queries";
+import { applyUserStateToDexie } from "@/lib/db/migration";
+
+// Legacy type for backward compatibility with export/import
+export interface StoredState {
+  version: number;
+  userState: UserHideoutState;
+}
 
 const CURRENT_VERSION = 1;
 
@@ -75,15 +83,18 @@ export function importData(encoded: string): StoredState {
 }
 
 /**
- * Exports current state from localStorage
+ * Exports current state from Dexie
  */
-export function exportCurrentState(): string | null {
+export async function exportCurrentState(): Promise<string | null> {
   try {
-    const stored = localStorage.getItem("tarkov-hideout-state");
-    if (!stored) return null;
+    const userState = await getUserHideoutState();
 
-    const parsed: StoredState = JSON.parse(stored);
-    return encodeData(parsed);
+    const state: StoredState = {
+      version: CURRENT_VERSION,
+      userState,
+    };
+
+    return encodeData(state);
   } catch (error) {
     console.error("Error exporting state:", error);
     return null;
@@ -91,9 +102,20 @@ export function exportCurrentState(): string | null {
 }
 
 /**
- * Imports data to localStorage
+ * Imports data to Dexie
+ */
+export async function importToDexie(encoded: string): Promise<void> {
+  const migrated = importData(encoded);
+  await applyUserStateToDexie(migrated.userState);
+}
+
+/**
+ * @deprecated Use importToDexie instead
+ * Legacy function kept for backward compatibility
  */
 export function importToLocalStorage(encoded: string): void {
   const migrated = importData(encoded);
-  localStorage.setItem("tarkov-hideout-state", JSON.stringify(migrated));
+  if (typeof window !== "undefined") {
+    localStorage.setItem("tarkov-hideout-state", JSON.stringify(migrated));
+  }
 }

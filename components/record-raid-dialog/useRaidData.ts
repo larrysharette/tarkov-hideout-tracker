@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import type { Item } from "@/app/api/items/route";
+import type { Item } from "@/lib/types/item";
 import type { Task } from "@/lib/types/tasks";
 import { addVersionToApiUrl } from "@/lib/utils/version";
 
@@ -57,4 +57,3 @@ export function useRaidData(open: boolean) {
     isLoadingTasks,
   };
 }
-

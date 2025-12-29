@@ -1,7 +1,20 @@
 "use client";
 
 import { useMemo, useState, useCallback } from "react";
-import { useHideout } from "@/contexts/HideoutContext";
+import { useLiveQuery } from "dexie-react-hooks";
+import { db } from "@/lib/db/index";
+import { getHideoutData, getUserHideoutState } from "@/lib/db/queries";
+import { useStationLevels } from "@/hooks/use-station-levels";
+import { useInventory } from "@/hooks/use-inventory";
+import { usePlayerInfo } from "@/hooks/use-player-info";
+import { useQuest } from "@/hooks/use-quest";
+import { toggleFocusedUpgrade as toggleFocusedUpgradeDb } from "@/lib/db/updates";
+import {
+  calculateItemSummary,
+  getAvailableUpgrades,
+} from "@/lib/utils/hideout-calculations";
+import { getUpgradeKey } from "@/lib/utils/hideout-data";
+import type { UserHideoutState } from "@/lib/types/hideout";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -51,23 +64,96 @@ function formatNumber(num: number): string {
 
 export function ItemSummaryTable() {
   const {
-    isLoading,
-    error,
-    getItemSummary,
-    setInventoryQuantity,
     hideoutData,
-    userState,
-    getAvailableUpgrades,
+    isLoading: isLoadingStations,
+    stationLevels,
+  } = useStationLevels();
+  const {
+    inventory,
+    setInventoryQuantity,
     addToWatchlist,
     removeFromWatchlist,
     isInWatchlist,
-  } = useHideout();
+  } = useInventory();
+  const { traderLevels, playerLevel } = usePlayerInfo();
+  const { allTasks } = useQuest();
+
+  // Query stations to get focused upgrades
+  const stations = useLiveQuery(() => db.stations.toArray(), []);
+  const generalInfo = useLiveQuery(
+    () => db.generalInformation.get("general"),
+    []
+  );
+  const inventoryRecords = useLiveQuery(() => db.inventory.toArray(), []);
+
+  // Reconstruct userState from individual hooks
+  const userState = useMemo((): UserHideoutState | null => {
+    if (!stations || !generalInfo || !inventoryRecords || !allTasks)
+      return null;
+
+    // Build focusedUpgrades array
+    const focusedUpgradesArray: string[] = [];
+    for (const station of stations) {
+      for (const level of station.levels) {
+        if (level.isFocused) {
+          focusedUpgradesArray.push(getUpgradeKey(station.id, level.level));
+        }
+      }
+    }
+
+    // Build completedQuests array
+    const completedQuestsArray = allTasks
+      .filter((t) => t.isCompleted)
+      .map((t) => t.id);
+
+    return {
+      stationLevels,
+      inventory,
+      focusedUpgrades: focusedUpgradesArray,
+      traderLevels,
+      completedQuests: completedQuestsArray,
+      playerLevel: playerLevel ?? 1,
+    };
+  }, [
+    stations,
+    stationLevels,
+    inventory,
+    traderLevels,
+    allTasks,
+    playerLevel,
+    generalInfo,
+  ]);
+
+  // Compute item summary
+  const itemSummary = useMemo(() => {
+    if (!hideoutData || !userState) return [];
+    return calculateItemSummary(hideoutData, userState);
+  }, [hideoutData, userState]);
+
+  // Compute available upgrades
+  const availableUpgrades = useMemo(() => {
+    if (!hideoutData || !userState) return [];
+    return getAvailableUpgrades(hideoutData, userState);
+  }, [hideoutData, userState]);
+
+  // Toggle focused upgrade
+  const toggleFocusedUpgrade = useCallback(
+    async (stationId: string, level: number) => {
+      try {
+        await toggleFocusedUpgradeDb(stationId, level);
+      } catch (err) {
+        console.error("Error toggling focused upgrade:", err);
+      }
+    },
+    []
+  );
+
+  const isLoading = isLoadingStations || !userState;
+
   const [sortField, setSortField] = useState<SortField | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>(null);
   const [filterType, setFilterType] = useState<FilterType>("all");
   const [showAvailableOnly, setShowAvailableOnly] = useState(false);
-
-  const itemSummary = getItemSummary();
 
   // Fuzzy search for item summary
   const {
@@ -129,8 +215,6 @@ export function ItemSummaryTable() {
     if (!hideoutData || !showAvailableOnly) {
       return null; // Return null when filter is off or data not loaded
     }
-
-    const availableUpgrades = getAvailableUpgrades();
     const itemSet = new Set<string>();
 
     for (const upgrade of availableUpgrades) {
@@ -140,7 +224,7 @@ export function ItemSummaryTable() {
     }
 
     return itemSet;
-  }, [hideoutData, userState, showAvailableOnly, getAvailableUpgrades]);
+  }, [hideoutData, availableUpgrades, showAvailableOnly]);
 
   // Apply filter based on filterType and showAvailableOnly
   const visibleItems = useMemo(() => {
@@ -210,17 +294,6 @@ export function ItemSummaryTable() {
         <div>
           <h2 className="text-xl font-semibold mb-1">Item Summary</h2>
           <p className="text-muted-foreground text-sm">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="space-y-4">
-        <div>
-          <h2 className="text-xl font-semibold mb-1">Item Summary</h2>
-          <p className="text-destructive text-sm">Error: {error}</p>
         </div>
       </div>
     );

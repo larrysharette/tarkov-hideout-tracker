@@ -1,7 +1,9 @@
 "use client";
 
-import { useMemo, useState, useCallback, useEffect } from "react";
-import { useHideout } from "@/contexts/HideoutContext";
+import { useMemo, useState, useCallback } from "react";
+import { useInventory } from "@/hooks/use-inventory";
+import { useLiveQuery } from "dexie-react-hooks";
+import { db, InventoryRecord } from "@/lib/db/index";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -19,14 +21,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import {
-  Combobox,
-  ComboboxContent,
-  ComboboxEmpty,
-  ComboboxInput,
-  ComboboxItem,
-  ComboboxList,
-} from "@/components/ui/combobox";
+import { ItemSelector } from "@/components/ui/item-selector";
 import {
   IconExternalLink,
   IconTrash,
@@ -36,8 +31,7 @@ import {
 } from "@tabler/icons-react";
 import { useFuzzySearch } from "@/hooks/use-fuzzy-search";
 import { SearchInput } from "@/components/ui/search-input";
-import type { Item } from "@/app/api/items/route";
-import { addVersionToApiUrl } from "@/lib/utils/version";
+import type { Item } from "@/lib/types/item";
 
 function formatNumber(num: number): string {
   return num.toLocaleString("en-US");
@@ -56,13 +50,7 @@ type FilterType =
   | "canBeCrafted"
   | "collectorItem";
 
-const CURRENCY_ITEMS = new Set([
-  "Roubles",
-  "Euros",
-  "Dollars",
-  "USD",
-  "US Dollars",
-]);
+const CURRENCY_ITEMS = ["Roubles", "Euros", "Dollars", "USD", "US Dollars"];
 
 const FILTER_OPTIONS = [
   { value: "all" as FilterType, label: "All Items" },
@@ -74,123 +62,68 @@ const FILTER_OPTIONS = [
 
 export function InventoryView() {
   const {
+    inventory,
+    inventoryItems: inventoryRecords,
+    currencies,
     isLoading,
-    error,
-    userState,
     setInventoryQuantity,
     addToWatchlist,
     removeFromWatchlist,
     isInWatchlist,
-  } = useHideout();
-  const [items, setItems] = useState<Item[]>([]);
-  const [isLoadingItems, setIsLoadingItems] = useState(false);
+    updateCurrencies,
+  } = useInventory();
+
+  // Query all items from Dexie for item metadata (icons, etc.)
+  const allItems = useLiveQuery(
+    () =>
+      db.inventory
+        .where("name")
+        .noneOf(CURRENCY_ITEMS)
+        .and((item) => item.quantityOwned > 0)
+        .toArray(),
+    [],
+    [] as InventoryRecord[]
+  );
+
   const [filterType, setFilterType] = useState<FilterType>("all");
   const [quickAddItem, setQuickAddItem] = useState<string>("");
   const [quickAddQuantity, setQuickAddQuantity] = useState<number>(1);
-
-  // Fetch items from API for icons
-  useEffect(() => {
-    setIsLoadingItems(true);
-    fetch(addVersionToApiUrl("/api/items"))
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error("Failed to fetch items");
-        }
-        return res.json();
-      })
-      .then((data: Item[]) => {
-        setItems(data);
-      })
-      .catch((error) => {
-        console.error("Error fetching items:", error);
-      })
-      .finally(() => {
-        setIsLoadingItems(false);
-      });
-  }, []);
-
-  // Create a map of item names to item data for quick lookup
-  const itemsMap = useMemo(() => {
-    const map = new Map<string, Item>();
-    items.forEach((item) => {
-      map.set(item.name, item);
-    });
-    return map;
-  }, [items]);
-
-  // Get currency amounts
-  const currencies = useMemo(() => {
-    const roubles = userState.inventory["Roubles"] || 0;
-    const euros = userState.inventory["Euros"] || 0;
-    const dollars =
-      userState.inventory["Dollars"] ||
-      userState.inventory["USD"] ||
-      userState.inventory["US Dollars"] ||
-      0;
-    return { roubles, euros, dollars };
-  }, [userState.inventory]);
-
-  // Get inventory items with item data (excluding currencies)
-  const inventoryItems = useMemo((): InventoryItem[] => {
-    return Object.entries(userState.inventory)
-      .filter(([name, quantity]) => quantity > 0 && !CURRENCY_ITEMS.has(name))
-      .map(([name, quantity]) => ({
-        name,
-        quantity,
-        itemData: itemsMap.get(name),
-      }))
-      .sort((a, b) => {
-        // Sort by name alphabetically
-        return a.name.localeCompare(b.name);
-      });
-  }, [userState.inventory, itemsMap]);
 
   // Fuzzy search for inventory items
   const {
     results: fuzzySearchResults,
     query: searchQuery,
     setQuery: setSearchQuery,
-  } = useFuzzySearch(inventoryItems, {
+  } = useFuzzySearch(allItems, {
     keys: [{ name: "name", weight: 1 }],
     minMatchCharLength: 2,
   });
 
-  // Convert fuzzy search results back to InventoryItem[]
-  const fuzzySearchItems = useMemo(() => {
-    if (!searchQuery.trim()) return inventoryItems;
-    return fuzzySearchResults as unknown as InventoryItem[];
-  }, [searchQuery, fuzzySearchResults, inventoryItems]);
-
   // Filter inventory items by search query and filter type
   const filteredItems = useMemo(() => {
     // Start with fuzzy search results if searching, otherwise use all items
-    let items = searchQuery.trim() ? fuzzySearchItems : inventoryItems;
+    let items = searchQuery.trim() ? fuzzySearchResults : allItems;
 
     // Apply filter type
     switch (filterType) {
       case "usedInTasks":
         items = items.filter(
-          (item) =>
-            item.itemData?.usedInTasks && item.itemData.usedInTasks.length > 0
+          (item) => item.usedInTasks && item.usedInTasks.length > 0
         );
         break;
       case "usedInCrafts":
         items = items.filter(
-          (item) =>
-            item.itemData?.craftsUsing && item.itemData.craftsUsing.length > 0
+          (item) => item.craftsUsing && item.craftsUsing.length > 0
         );
         break;
       case "canBeCrafted":
         items = items.filter(
-          (item) =>
-            item.itemData?.craftsFor && item.itemData.craftsFor.length > 0
+          (item) => item.craftsFor && item.craftsFor.length > 0
         );
         break;
       case "collectorItem":
         items = items.filter((item) => {
-          return item.itemData?.usedInTasks?.some(
-            (task) => task.name === "Collector"
-          );
+          return item.usedInTasks?.some((task) => task.name === "Collector");
         });
         break;
       case "all":
@@ -200,7 +133,7 @@ export function InventoryView() {
     }
 
     return items;
-  }, [inventoryItems, fuzzySearchItems, searchQuery, filterType]);
+  }, [allItems, fuzzySearchResults, searchQuery, filterType]);
 
   const handleQuantityChange = useCallback(
     (itemName: string, newQuantity: number) => {
@@ -218,17 +151,12 @@ export function InventoryView() {
 
   const handleQuickAdd = useCallback(() => {
     if (quickAddItem) {
-      const currentQuantity = userState.inventory[quickAddItem] || 0;
+      const currentQuantity = inventory[quickAddItem] || 0;
       setInventoryQuantity(quickAddItem, currentQuantity + quickAddQuantity);
       setQuickAddItem("");
       setQuickAddQuantity(1);
     }
-  }, [
-    quickAddItem,
-    quickAddQuantity,
-    userState.inventory,
-    setInventoryQuantity,
-  ]);
+  }, [quickAddItem, quickAddQuantity, inventory, setInventoryQuantity]);
 
   const handleAddToWatchlist = useCallback(
     (itemName: string, quantity: number = 1) => {
@@ -250,8 +178,9 @@ export function InventoryView() {
 
   // Get item names for quick add combobox
   const itemNames = useMemo(() => {
-    return items.map((item) => item.name).sort();
-  }, [items]);
+    if (!allItems) return [];
+    return allItems.map((item) => item.name).sort();
+  }, [allItems]);
 
   if (isLoading) {
     return (
@@ -264,20 +193,9 @@ export function InventoryView() {
     );
   }
 
-  if (error) {
-    return (
-      <div className="space-y-4">
-        <div>
-          <h1 className="text-3xl font-bold mb-2">Inventory</h1>
-          <p className="text-destructive text-sm">Error: {error}</p>
-        </div>
-      </div>
-    );
-  }
-
-  const totalItems = inventoryItems.length;
-  const totalQuantity = inventoryItems.reduce(
-    (sum, item) => sum + item.quantity,
+  const totalItems = allItems.length;
+  const totalQuantity = allItems.reduce(
+    (sum, item) => sum + item.quantityOwned,
     0
   );
 
@@ -307,7 +225,7 @@ export function InventoryView() {
                 value={currencies.roubles || ""}
                 onChange={(e) => {
                   const value = parseInt(e.target.value, 10) || 0;
-                  setInventoryQuantity("Roubles", value);
+                  updateCurrencies(value, 0, 0);
                 }}
                 className="text-right font-medium"
                 placeholder="0"
@@ -323,7 +241,7 @@ export function InventoryView() {
                 value={currencies.euros || ""}
                 onChange={(e) => {
                   const value = parseInt(e.target.value, 10) || 0;
-                  setInventoryQuantity("Euros", value);
+                  updateCurrencies(0, value, 0);
                 }}
                 className="text-right font-medium"
                 placeholder="0"
@@ -339,14 +257,7 @@ export function InventoryView() {
                 value={currencies.dollars || ""}
                 onChange={(e) => {
                   const value = parseInt(e.target.value, 10) || 0;
-                  // Try "Dollars" first, fallback to "USD" or "US Dollars"
-                  const dollarKey =
-                    userState.inventory["Dollars"] !== undefined
-                      ? "Dollars"
-                      : userState.inventory["USD"] !== undefined
-                      ? "USD"
-                      : "Dollars";
-                  setInventoryQuantity(dollarKey, value);
+                  updateCurrencies(0, 0, value);
                 }}
                 className="text-right font-medium"
                 placeholder="0"
@@ -364,43 +275,13 @@ export function InventoryView() {
               <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
                 Quick Add Item
               </label>
-              <Combobox
-                items={itemNames}
+              <ItemSelector
+                items={allItems || []}
+                itemNames={itemNames}
                 value={quickAddItem}
                 onValueChange={(value) => setQuickAddItem(value || "")}
-                limit={10}
-              >
-                <ComboboxInput
-                  showClear
-                  placeholder="Search for an item..."
-                  className="w-full"
-                />
-                <ComboboxContent>
-                  <ComboboxEmpty>No items found.</ComboboxEmpty>
-                  <ComboboxList>
-                    {(itemName) => {
-                      const item = items.find((i) => i.name === itemName);
-                      return (
-                        <ComboboxItem
-                          key={item?.id ?? itemName}
-                          value={itemName}
-                        >
-                          <div className="flex items-center gap-2">
-                            {item?.iconLink && (
-                              <img
-                                src={item.iconLink}
-                                alt={itemName}
-                                className="w-5 h-5 object-contain"
-                              />
-                            )}
-                            <span>{itemName}</span>
-                          </div>
-                        </ComboboxItem>
-                      );
-                    }}
-                  </ComboboxList>
-                </ComboboxContent>
-              </Combobox>
+                placeholder="Search for an item..."
+              />
             </div>
             <div className="w-full sm:w-24">
               <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
@@ -483,14 +364,14 @@ export function InventoryView() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {filteredItems.map((inventoryItem) => {
             const hasInfo =
-              (inventoryItem.itemData?.usedInTasks?.length ?? 0) > 0 ||
-              (inventoryItem.itemData?.craftsFor?.length ?? 0) > 0 ||
-              (inventoryItem.itemData?.craftsUsing?.length ?? 0) > 0;
+              (inventoryItem.usedInTasks?.length ?? 0) > 0 ||
+              (inventoryItem.craftsFor?.length ?? 0) > 0 ||
+              (inventoryItem.craftsUsing?.length ?? 0) > 0;
 
-            const iconElement = inventoryItem.itemData?.iconLink ? (
+            const iconElement = inventoryItem.iconLink ? (
               <div className="shrink-0 cursor-pointer">
                 <img
-                  src={inventoryItem.itemData.iconLink}
+                  src={inventoryItem.iconLink}
                   alt={inventoryItem.name}
                   className="w-12 h-12 object-contain"
                 />
@@ -508,7 +389,7 @@ export function InventoryView() {
                     {/* Item Icon - wrapped in HoverCardTrigger if hasInfo */}
                     <ItemHoverCard
                       itemName={inventoryItem.name}
-                      itemData={inventoryItem.itemData}
+                      itemData={inventoryItem}
                       iconElement={iconElement}
                       onAddCraftRequirementsToWatchlist={
                         handleAddCraftRequirementsToWatchlist
@@ -521,9 +402,9 @@ export function InventoryView() {
                         <h3 className="font-medium text-sm leading-tight line-clamp-2 flex-1">
                           {inventoryItem.name}
                         </h3>
-                        {inventoryItem.itemData?.wikiLink && (
+                        {inventoryItem.wikiLink && (
                           <a
-                            href={inventoryItem.itemData.wikiLink}
+                            href={inventoryItem.wikiLink}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="shrink-0 text-muted-foreground hover:text-foreground transition-colors"
@@ -542,7 +423,7 @@ export function InventoryView() {
                         <Input
                           type="number"
                           min="0"
-                          value={inventoryItem.quantity || ""}
+                          value={inventoryItem.quantityOwned || ""}
                           onChange={(e) => {
                             const value = parseInt(e.target.value, 10) || 0;
                             handleQuantityChange(inventoryItem.name, value);
@@ -554,7 +435,7 @@ export function InventoryView() {
                           <TooltipTrigger>
                             <Button
                               variant={
-                                isInWatchlist(inventoryItem.name)
+                                inventoryItem.isWatchlisted
                                   ? "default"
                                   : "outline"
                               }
@@ -567,7 +448,7 @@ export function InventoryView() {
                                 } else {
                                   handleAddToWatchlist(
                                     inventoryItem.name,
-                                    inventoryItem.quantity || 1
+                                    inventoryItem.quantityOwned || 1
                                   );
                                 }
                               }}
@@ -607,22 +488,18 @@ export function InventoryView() {
                       {/* Item metadata badges */}
                       {hasInfo && (
                         <div className="flex flex-wrap gap-1">
-                          {(inventoryItem.itemData?.usedInTasks?.length ?? 0) >
-                            0 && (
+                          {(inventoryItem.usedInTasks?.length ?? 0) > 0 && (
                             <Badge
                               variant="default"
                               className="text-[10px] px-1 py-0 h-4"
                             >
-                              {inventoryItem.itemData?.usedInTasks?.length ?? 0}{" "}
-                              task
-                              {(inventoryItem.itemData?.usedInTasks?.length ??
-                                0) !== 1
+                              {inventoryItem.usedInTasks?.length ?? 0} task
+                              {(inventoryItem.usedInTasks?.length ?? 0) !== 1
                                 ? "s"
                                 : ""}
                             </Badge>
                           )}
-                          {(inventoryItem.itemData?.craftsFor?.length ?? 0) >
-                            0 && (
+                          {(inventoryItem.craftsFor?.length ?? 0) > 0 && (
                             <Badge
                               variant="secondary"
                               className="text-[10px] px-1 py-0 h-4"
@@ -630,8 +507,7 @@ export function InventoryView() {
                               Craftable
                             </Badge>
                           )}
-                          {(inventoryItem.itemData?.craftsUsing?.length ?? 0) >
-                            0 && (
+                          {(inventoryItem.craftsUsing?.length ?? 0) > 0 && (
                             <Badge
                               variant="outline"
                               className="text-[10px] px-1 py-0 h-4"

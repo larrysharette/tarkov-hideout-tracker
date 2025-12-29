@@ -4,11 +4,11 @@ import { useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { IconPlus } from "@tabler/icons-react";
-import type { Item } from "@/app/api/items/route";
 import type { Task } from "@/lib/types/tasks";
 import type { RaidItem, SelectedTask } from "./types";
 import { RaidItemRow } from "./RaidItemRow";
 import { TaskSelector } from "./TaskSelector";
+import { Item } from "@/lib/types/item";
 
 interface RaidFormViewProps {
   isLoadingItems: boolean;
@@ -72,11 +72,7 @@ export function RaidFormView({
                 </div>
                 <div className="flex flex-wrap gap-1.5">
                   {relatedTasksForRaid.map((task) => (
-                    <Badge
-                      key={task.id}
-                      variant="outline"
-                      className="text-xs"
-                    >
+                    <Badge key={task.id} variant="outline" className="text-xs">
                       {task.name}
                     </Badge>
                   ))}
@@ -124,4 +120,3 @@ export function RaidFormView({
     </>
   );
 }
-

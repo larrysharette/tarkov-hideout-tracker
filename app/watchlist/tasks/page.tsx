@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, useEffect, useCallback } from "react";
-import { useHideout } from "@/contexts/HideoutContext";
+import { useTaskWatchlist } from "@/hooks/use-task-watchlist";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -30,13 +30,12 @@ import { addVersionToApiUrl } from "@/lib/utils/version";
 
 export default function WatchlistTasksPage() {
   const {
+    taskWatchlist,
     isLoading,
-    error,
-    userState,
     addTaskToWatchlist,
     removeTaskFromWatchlist,
     isTaskInWatchlist,
-  } = useHideout();
+  } = useTaskWatchlist();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoadingTasks, setIsLoadingTasks] = useState(false);
   const [quickAddTask, setQuickAddTask] = useState<string>("");
@@ -65,11 +64,10 @@ export default function WatchlistTasksPage() {
 
   // Get watchlist tasks
   const watchlistTasks = useMemo((): Task[] => {
-    const taskWatchlist = userState.taskWatchlist || [];
     return tasks
       .filter((task) => taskWatchlist.includes(task.id))
       .sort((a, b) => a.name.localeCompare(b.name));
-  }, [userState.taskWatchlist, tasks]);
+  }, [taskWatchlist, tasks]);
 
   // Fuzzy search for watchlist tasks
   const {
@@ -133,19 +131,6 @@ export default function WatchlistTasksPage() {
           <div>
             <h1 className="text-3xl font-bold mb-2">Watchlist - Tasks</h1>
             <p className="text-muted-foreground">Loading...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="container mx-auto p-4 md:p-6 max-w-7xl">
-        <div className="space-y-4">
-          <div>
-            <h1 className="text-3xl font-bold mb-2">Watchlist - Tasks</h1>
-            <p className="text-destructive text-sm">Error: {error}</p>
           </div>
         </div>
       </div>

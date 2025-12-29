@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { importToLocalStorage, importData } from "@/lib/utils/data-export";
+import { importToDexie, importData } from "@/lib/utils/data-export";
 
 interface ImportDialogProps {
   open: boolean;
@@ -40,7 +40,7 @@ export function ImportDialog({ open, onOpenChange }: ImportDialogProps) {
     reader.readAsText(file);
   };
 
-  const handleImport = () => {
+  const handleImport = async () => {
     if (!importText.trim()) {
       setError("Please provide import data");
       return;
@@ -48,11 +48,11 @@ export function ImportDialog({ open, onOpenChange }: ImportDialogProps) {
 
     try {
       // Validate the data structure
-      const imported = importData(importText.trim());
-      
-      // Import to localStorage
-      importToLocalStorage(importText.trim());
-      
+      importData(importText.trim());
+
+      // Import to Dexie
+      await importToDexie(importText.trim());
+
       // Reload the page to apply the changes
       setSuccess(true);
       onOpenChange(false);
@@ -61,7 +61,9 @@ export function ImportDialog({ open, onOpenChange }: ImportDialogProps) {
       }, 500);
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Failed to import data. Please check the format."
+        err instanceof Error
+          ? err.message
+          : "Failed to import data. Please check the format."
       );
       setSuccess(false);
     }
@@ -82,8 +84,8 @@ export function ImportDialog({ open, onOpenChange }: ImportDialogProps) {
         <DialogHeader>
           <DialogTitle>Import Data</DialogTitle>
           <DialogDescription>
-            Import your tracker data from a file or paste the exported data. This
-            will replace your current data.
+            Import your tracker data from a file or paste the exported data.
+            This will replace your current data.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
@@ -143,4 +145,3 @@ export function ImportDialog({ open, onOpenChange }: ImportDialogProps) {
     </Dialog>
   );
 }
-

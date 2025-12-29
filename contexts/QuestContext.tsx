@@ -1,38 +1,30 @@
 "use client";
 
-import { createContext, useContext, useMemo, useCallback } from "react";
-import { useHideout } from "./HideoutContext";
+import { createContext, useContext } from "react";
+import { useQuest as useQuestHook } from "@/hooks/use-quest";
 
 interface QuestContextValue {
-  completedQuests: Set<string>;
-  toggleQuestCompletion: (questId: string) => void;
+  completedQuests: () => Set<string>;
+  toggleQuestCompletion: (questId: string) => Promise<void>;
   isQuestCompleted: (questId: string) => boolean;
-  markQuestsAsCompleted: (questIds: string[]) => void;
+  markQuestsAsCompleted: (questIds: string[]) => Promise<void>;
 }
 
 const QuestContext = createContext<QuestContextValue | null>(null);
 
 export function QuestProvider({ children }: { children: React.ReactNode }) {
   const {
-    userState,
-    toggleQuestCompletion: toggleQuest,
-    markQuestsAsCompleted: markQuests,
-  } = useHideout();
-
-  const completedQuests = useMemo(() => {
-    return new Set(userState.completedQuests || []);
-  }, [userState.completedQuests]);
-
-  const isQuestCompleted = useCallback(
-    (questId: string) => completedQuests.has(questId),
-    [completedQuests]
-  );
+    completedQuests,
+    toggleQuestCompletion,
+    isQuestCompleted,
+    markQuestsAsCompleted,
+  } = useQuestHook();
 
   const contextValue: QuestContextValue = {
     completedQuests,
-    toggleQuestCompletion: toggleQuest,
+    toggleQuestCompletion,
     isQuestCompleted,
-    markQuestsAsCompleted: markQuests,
+    markQuestsAsCompleted,
   };
 
   return (
