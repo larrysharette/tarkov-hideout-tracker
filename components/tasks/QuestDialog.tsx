@@ -17,12 +17,15 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { useQuest } from "@/contexts/QuestContext";
+import { useHideout } from "@/contexts/HideoutContext";
 import {
   IconArrowRight,
   IconArrowRightFromArc,
   IconEye,
+  IconEyeOff,
   IconCheck,
 } from "@tabler/icons-react";
+import { cn } from "@/lib/utils";
 
 interface QuestDialogProps {
   quest: Task | null;
@@ -80,6 +83,8 @@ export function QuestDialog({
 }: QuestDialogProps) {
   const { isQuestCompleted, toggleQuestCompletion, markQuestsAsCompleted } =
     useQuest();
+  const { addTaskToWatchlist, removeTaskFromWatchlist, isTaskInWatchlist } =
+    useHideout();
 
   // Get quests that this quest unlocks
   const getUnlockedQuests = useCallback(
@@ -104,9 +109,20 @@ export function QuestDialog({
     }
   }, [quest, allQuests, isQuestCompleted, markQuestsAsCompleted]);
 
+  // Handle toggling watchlist (must be before early return)
+  const handleToggleWatchlist = useCallback(() => {
+    if (!quest) return;
+    if (isTaskInWatchlist(quest.id)) {
+      removeTaskFromWatchlist(quest.id);
+    } else {
+      addTaskToWatchlist(quest.id);
+    }
+  }, [quest, addTaskToWatchlist, removeTaskFromWatchlist, isTaskInWatchlist]);
+
   if (!quest) return null;
 
   const neededKeys = quest.neededKeys?.flatMap((key) => key.keys) ?? [];
+  const isInWatchlist = isTaskInWatchlist(quest.id);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -179,38 +195,102 @@ export function QuestDialog({
                   </div>
                 </DialogHeader>
 
-                {/* Mark as Completed checkbox */}
-                <div className="flex items-center gap-2 bg-black/40 backdrop-blur-sm rounded-lg px-3 py-2">
-                  <Checkbox
-                    id="complete-quest-banner"
-                    checked={isQuestCompleted(quest.id)}
-                    onCheckedChange={() => toggleQuestCompletion(quest.id)}
-                    className="border-white/80 data-checked:bg-white data-checked:border-white"
-                  />
-                  <Label
-                    htmlFor="complete-quest-banner"
-                    className="text-white text-sm font-medium drop-shadow-md cursor-pointer"
+                {/* Watchlist button and Mark as Completed checkbox */}
+                <div className="flex items-center gap-2">
+                  {/* Watchlist button */}
+                  <Button
+                    variant={isInWatchlist ? "default" : "ghost"}
+                    size="icon"
+                    className="h-8 w-8 shrink-0"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleToggleWatchlist();
+                    }}
+                    title={
+                      isInWatchlist
+                        ? "Remove from watchlist"
+                        : "Add to watchlist"
+                    }
                   >
-                    Complete
-                  </Label>
+                    {isInWatchlist ? (
+                      <IconEye className="h-4 w-4" />
+                    ) : (
+                      <IconEyeOff className="h-4 w-4" />
+                    )}
+                  </Button>
+                  {/* Complete checkbox */}
+                  <div className="flex items-center gap-2 bg-black/40 backdrop-blur-sm rounded-lg px-3 py-2">
+                    <Checkbox
+                      id="complete-quest-banner"
+                      checked={isQuestCompleted(quest.id)}
+                      onCheckedChange={() => toggleQuestCompletion(quest.id)}
+                      className="border-white/80 data-checked:bg-white data-checked:border-white"
+                    />
+                    <Label
+                      htmlFor="complete-quest-banner"
+                      className="text-white text-sm font-medium drop-shadow-md cursor-pointer"
+                    >
+                      Complete
+                    </Label>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         ) : (
           <DialogHeader className="px-6 pt-6">
-            <DialogTitle>{quest.name}</DialogTitle>
-            <div className="flex flex-wrap gap-2 mt-2">
-              {quest.kappaRequired && (
-                <Badge className="bg-amber-500 text-amber-950 w-fit">
-                  Kappa Required
-                </Badge>
-              )}
-              {quest.lightkeeperRequired && (
-                <Badge className="bg-blue-500 text-blue-950 w-fit">
-                  Lightkeeper Required
-                </Badge>
-              )}
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex-1">
+                <DialogTitle>{quest.name}</DialogTitle>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {quest.kappaRequired && (
+                    <Badge className="bg-amber-500 text-amber-950 w-fit">
+                      Kappa Required
+                    </Badge>
+                  )}
+                  {quest.lightkeeperRequired && (
+                    <Badge className="bg-blue-500 text-blue-950 w-fit">
+                      Lightkeeper Required
+                    </Badge>
+                  )}
+                </div>
+              </div>
+              {/* Watchlist button and Complete checkbox */}
+              <div className="flex items-center gap-2">
+                {/* Watchlist button */}
+                <Button
+                  variant={isInWatchlist ? "default" : "ghost"}
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleToggleWatchlist();
+                  }}
+                  title={
+                    isInWatchlist ? "Remove from watchlist" : "Add to watchlist"
+                  }
+                >
+                  {isInWatchlist ? (
+                    <IconEye className="h-4 w-4" />
+                  ) : (
+                    <IconEyeOff className="h-4 w-4" />
+                  )}
+                </Button>
+                {/* Complete checkbox */}
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="complete-quest-header"
+                    checked={isQuestCompleted(quest.id)}
+                    onCheckedChange={() => toggleQuestCompletion(quest.id)}
+                  />
+                  <Label
+                    htmlFor="complete-quest-header"
+                    className="text-sm font-medium cursor-pointer"
+                  >
+                    Complete
+                  </Label>
+                </div>
+              </div>
             </div>
           </DialogHeader>
         )}

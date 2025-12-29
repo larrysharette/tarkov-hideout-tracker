@@ -161,10 +161,10 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
         />
-        <Navigation />
 
         <HideoutProvider>
           <QuestProvider>
+            <Navigation />
             <main className="min-h-[calc(100vh-58px)]">{children}</main>
           </QuestProvider>
         </HideoutProvider>

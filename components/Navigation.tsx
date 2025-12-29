@@ -17,9 +17,11 @@ import {
   DrawerTrigger,
   DrawerClose,
 } from "@/components/ui/drawer";
-import { IconMenu } from "@tabler/icons-react";
+import { IconDownload, IconMenu, IconUpload } from "@tabler/icons-react";
 import { Separator } from "@/components/ui/separator";
 import { APP_VERSION, BUILD_DATE } from "@/changelog-data";
+import { ButtonGroup } from "./ui/button-group";
+import { RecordRaidDialog } from "./record-raid-dialog/RecordRaidDialog";
 
 const navigationItems = [
   { href: "/hideout", label: "Hideout" },
@@ -196,25 +198,26 @@ export function Navigation() {
 
               {/* Import/Export buttons */}
               <div className="md:flex items-center gap-1 md:gap-2 hidden">
-                <Button
-                  onClick={() => setImportOpen(true)}
-                  variant="outline"
-                  size="sm"
-                  className="text-xs md:text-sm px-2 md:px-3"
-                >
-                  <span className="hidden sm:inline">Import</span>
-                  <span className="sm:hidden">Imp</span>
-                </Button>
-                <Button
-                  onClick={() => setExportOpen(true)}
-                  variant="outline"
-                  size="sm"
-                  className="text-xs md:text-sm px-2 md:px-3"
-                >
-                  <span className="hidden sm:inline">Export</span>
-                  <span className="sm:hidden">Exp</span>
-                </Button>
+                <ButtonGroup>
+                  <Button
+                    onClick={() => setImportOpen(true)}
+                    variant="outline"
+                    size="icon"
+                    title="Import"
+                  >
+                    <IconDownload />
+                  </Button>
+                  <Button
+                    onClick={() => setExportOpen(true)}
+                    variant="outline"
+                    size="icon"
+                    title="Export"
+                  >
+                    <IconUpload />
+                  </Button>
+                </ButtonGroup>
               </div>
+              <RecordRaidDialog />
             </div>
           </div>
         </div>

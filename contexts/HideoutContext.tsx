@@ -38,6 +38,7 @@ const defaultUserState: UserHideoutState = {
   traderLevels: {},
   completedQuests: [],
   watchlist: {},
+  taskWatchlist: [],
   playerLevel: 1,
 };
 
@@ -327,6 +328,36 @@ export function HideoutProvider({ children }: { children: React.ReactNode }) {
     [userState.watchlist]
   );
 
+  const addTaskToWatchlist = useCallback((taskId: string) => {
+    setUserState((prev) => {
+      const taskWatchlist = new Set(prev.taskWatchlist || []);
+      if (taskWatchlist.has(taskId)) return prev;
+      taskWatchlist.add(taskId);
+      return {
+        ...prev,
+        taskWatchlist: Array.from(taskWatchlist),
+      };
+    });
+  }, []);
+
+  const removeTaskFromWatchlist = useCallback((taskId: string) => {
+    setUserState((prev) => {
+      const taskWatchlist = new Set(prev.taskWatchlist || []);
+      taskWatchlist.delete(taskId);
+      return {
+        ...prev,
+        taskWatchlist: Array.from(taskWatchlist),
+      };
+    });
+  }, []);
+
+  const isTaskInWatchlist = useCallback(
+    (taskId: string) => {
+      return (userState.taskWatchlist || []).includes(taskId);
+    },
+    [userState.taskWatchlist]
+  );
+
   // Computed values
   const getItemSummary = useCallback((): ItemSummary[] => {
     if (!hideoutData) return [];
@@ -364,6 +395,9 @@ export function HideoutProvider({ children }: { children: React.ReactNode }) {
     setWatchlistQuantity,
     removeFromWatchlist,
     isInWatchlist,
+    addTaskToWatchlist,
+    removeTaskFromWatchlist,
+    isTaskInWatchlist,
     getItemSummary,
     getAvailableUpgrades: () => getAvailableUpgradesMemo,
     getFocusedUpgrades: () => getFocusedUpgradesMemo,

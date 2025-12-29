@@ -27,7 +27,6 @@ import {
   ComboboxItem,
   ComboboxList,
 } from "@/components/ui/combobox";
-import { RecordRaidDialog } from "@/components/hideout/RecordRaidDialog";
 import {
   IconExternalLink,
   IconTrash,
@@ -290,7 +289,6 @@ export function InventoryView() {
             Manage your item inventory and record raids
           </p>
         </div>
-        <RecordRaidDialog />
       </div>
 
       {/* Currency */}

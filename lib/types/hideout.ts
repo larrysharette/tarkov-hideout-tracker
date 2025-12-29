@@ -127,6 +127,7 @@ export interface UserHideoutState {
   traderLevels?: Record<string, number>; // traderName -> level (optional for now)
   completedQuests?: string[]; // Array of quest IDs that are completed
   watchlist?: Record<string, number>; // itemName -> quantity needed (optional for backward compatibility)
+  taskWatchlist?: string[]; // Array of task IDs in watchlist (optional for backward compatibility)
   playerLevel?: number; // Player's current level (optional for backward compatibility)
 }
 
@@ -172,6 +173,9 @@ export interface HideoutContextValue {
   setWatchlistQuantity: (itemName: string, quantity: number) => void;
   removeFromWatchlist: (itemName: string) => void;
   isInWatchlist: (itemName: string) => boolean;
+  addTaskToWatchlist: (taskId: string) => void;
+  removeTaskFromWatchlist: (taskId: string) => void;
+  isTaskInWatchlist: (taskId: string) => boolean;
 
   // Computed
   getItemSummary: () => ItemSummary[];

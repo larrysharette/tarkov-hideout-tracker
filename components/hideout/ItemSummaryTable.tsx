@@ -29,7 +29,7 @@ import {
 } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
 import type { ItemSummary } from "@/lib/types/hideout";
-import { RecordRaidDialog } from "./RecordRaidDialog";
+import { RecordRaidDialog } from "../record-raid-dialog/RecordRaidDialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useFuzzySearch } from "@/hooks/use-fuzzy-search";
 import { SearchInput } from "@/components/ui/search-input";
@@ -235,7 +235,6 @@ export function ItemSummaryTable() {
             Overview of items needed for hideout upgrades
           </p>
         </div>
-        <RecordRaidDialog />
       </div>
       <div className="space-y-4">
         <div className="flex flex-col md:flex-row gap-2 md:items-center">
