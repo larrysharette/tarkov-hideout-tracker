@@ -74,7 +74,9 @@ export default function WatchlistOverviewPage() {
           </div>
 
           {/* Main Content - Responsive Layout */}
-          <Content />
+          <Suspense fallback={<div>Loading...</div>}>
+            <Content />
+          </Suspense>
         </div>
       </div>
     </>
