@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+
 import { syncAllData } from "@/lib/db/sync";
 
 /**
@@ -26,4 +27,3 @@ export function DataSync() {
 
   return null;
 }
-

@@ -1,19 +1,22 @@
-import { TraderLevelSelector } from "@/components/hideout/TraderLevelSelector";
-import { StationLevelSelector } from "@/components/hideout/StationLevelSelector";
-import { UpgradeFocusManager } from "@/components/hideout/UpgradeFocusManager";
-import { ItemSummaryTable } from "@/components/hideout/ItemSummaryTable";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import type { Metadata } from "next";
 
+import { ItemSummaryTable } from "@/components/hideout/ItemSummaryTable";
+import { StationLevelSelector } from "@/components/hideout/StationLevelSelector";
+import { TraderLevelSelector } from "@/components/hideout/TraderLevelSelector";
+import { UpgradeFocusManager } from "@/components/hideout/UpgradeFocusManager";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 export const metadata: Metadata = {
-  title: "Home",
+  title: "Hideout",
   description:
-    "Track your Escape from Tarkov hideout upgrade requirements, manage inventory, and plan your upgrade path. Calculate item requirements for focused upgrades and future needs.",
+    "Track your Escape from Tarkov hideout upgrade requirements and inventory.",
   openGraph: {
-    title:
-      "Adin's Tarkov Tracker - Complete Escape from Tarkov Progress Tracker",
+    title: "Hideout | Adin's Tarkov Tracker",
     description:
-      "Comprehensive Escape from Tarkov tracker for hideout upgrades, task progression, inventory management, and item watchlists.",
+      "Track your Escape from Tarkov hideout upgrade requirements. Calculate item requirements for focused upgrades and future needs.",
+  },
+  alternates: {
+    canonical: "/hideout",
   },
 };
 

@@ -1,5 +1,6 @@
-import { useMemo } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
+import { useMemo } from "react";
+
 import { db } from "@/lib/db/index";
 import { updatePlayerLevel, updateTraderLevel } from "@/lib/db/updates";
 

@@ -1,28 +1,29 @@
 "use client";
 
-import { useMemo, useState, useCallback } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
-import { db } from "@/lib/db/index";
-import { useStationLevels } from "@/hooks/use-station-levels";
+import { useCallback, useMemo, useState } from "react";
+
+import { Button } from "@/components/ui/button";
+import { SearchInput } from "@/components/ui/search-input";
+import { useFuzzySearch } from "@/hooks/use-fuzzy-search";
 import { useInventory } from "@/hooks/use-inventory";
 import { usePlayerInfo } from "@/hooks/use-player-info";
 import { useQuest } from "@/hooks/use-quest";
+import { useStationLevels } from "@/hooks/use-station-levels";
+import { db } from "@/lib/db/index";
 import {
-  toggleFocusedUpgrade as toggleFocusedUpgradeDb,
   clearFocusedUpgrades as clearFocusedUpgradesDb,
   purchaseUpgrade as purchaseUpgradeDb,
+  toggleFocusedUpgrade as toggleFocusedUpgradeDb,
 } from "@/lib/db/updates";
+import type { StationLevel, UserHideoutState } from "@/lib/types/hideout";
 import {
   getAvailableUpgrades,
-  getFocusedUpgrades,
   isUpgradeAvailable,
 } from "@/lib/utils/hideout-calculations";
-import { Button } from "@/components/ui/button";
-import { UpgradeCard } from "./UpgradeCard";
 import { getUpgradeKey } from "@/lib/utils/hideout-data";
-import { useFuzzySearch } from "@/hooks/use-fuzzy-search";
-import { SearchInput } from "@/components/ui/search-input";
-import type { UserHideoutState, StationLevel } from "@/lib/types/hideout";
+
+import { UpgradeCard } from "./UpgradeCard";
 
 export function UpgradeFocusManager() {
   const {
@@ -72,12 +73,6 @@ export function UpgradeFocusManager() {
   const availableUpgrades = useMemo(() => {
     if (!hideoutData || !userState) return [];
     return getAvailableUpgrades(hideoutData, userState);
-  }, [hideoutData, userState]);
-
-  // Compute focused upgrades
-  const focusedUpgrades = useMemo(() => {
-    if (!hideoutData || !userState) return [];
-    return getFocusedUpgrades(hideoutData, userState);
   }, [hideoutData, userState]);
 
   // Toggle focused upgrade
@@ -163,7 +158,7 @@ export function UpgradeFocusManager() {
     }
 
     // Sort upgrades within each station by level
-    for (const [stationId, stationUpgrades] of grouped) {
+    for (const [_stationId, stationUpgrades] of grouped) {
       stationUpgrades.sort((a, b) => a.level - b.level);
     }
 

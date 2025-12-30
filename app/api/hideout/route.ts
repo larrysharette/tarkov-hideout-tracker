@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
-import { transformGraphQLData } from "@/lib/utils/hideout-data";
+
 import type {
   GraphQLHideoutResponse,
   GraphQLStation,
 } from "@/lib/types/hideout";
+import { transformGraphQLData } from "@/lib/utils/hideout-data";
 
 // Revalidate every 24 hours (86400 seconds)
 export const revalidate = 86400;
@@ -70,7 +71,7 @@ export async function GET() {
     }
 
     // Check if data exists
-    if (!data.data || !data.data.hideoutStations) {
+    if (!data.data?.hideoutStations) {
       throw new Error("No hideout data received from API");
     }
 

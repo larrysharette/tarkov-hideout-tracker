@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
+
 import type {
-  GraphQLTradersResponse,
   GraphQLTrader,
+  GraphQLTradersResponse,
   TransformedTradersData,
 } from "@/lib/types/hideout";
 
@@ -51,7 +52,7 @@ export async function GET() {
     }
 
     // Check if data exists
-    if (!data.data || !data.data.traders) {
+    if (!data.data?.traders) {
       throw new Error("No traders data received from API");
     }
 

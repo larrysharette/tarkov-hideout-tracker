@@ -1,8 +1,12 @@
-import Dexie, { type Table } from "dexie";
-import type { StationLevel, Trader, Station } from "@/lib/types/hideout";
-import { Item } from "../types/item";
-import { Task } from "../types/tasks";
-import { getUpgradeKey } from "@/lib/utils/hideout-data";
+import { Dexie, type Table } from "dexie";
+
+import type { StationLevel, Trader } from "@/lib/types/hideout";
+
+import { type Item } from "../types/item";
+import { type Map } from "../types/maps";
+import { type Task } from "../types/tasks";
+
+Dexie.debug = true;
 
 // Database schema - caching layer with user state flags
 export interface StationRecord {
@@ -17,6 +21,7 @@ export interface InventoryRecord extends Item {
   quantityOwned: number;
   quantityNeeded: number;
   isWatchlisted: boolean;
+  mapPositions: Record<string, { x: number; y: number }>;
 }
 
 export interface GeneralInformationRecord {
@@ -28,6 +33,15 @@ export interface GeneralInformationRecord {
 export interface TaskRecord extends Task {
   isCompleted: boolean;
   isWatchlisted: boolean;
+  mapId: string | null;
+  mapPositions: Record<
+    string,
+    Array<{ objectiveId?: string; x: number; y: number }>
+  >;
+}
+
+export interface MapRecord extends Map {
+  imageLink: string;
 }
 
 class AdinsTarkovTrackerDB extends Dexie {
@@ -35,16 +49,18 @@ class AdinsTarkovTrackerDB extends Dexie {
   inventory!: Table<InventoryRecord, string>;
   generalInformation!: Table<GeneralInformationRecord, string>;
   tasks!: Table<TaskRecord, string>;
+  maps!: Table<MapRecord, string>;
 
   constructor() {
     super("AdinsTarkovTrackerDB");
     this.version(1).stores({
       stations: "&id,name,imageLink,currentLevel,levels",
       inventory:
-        "&id,name,iconLink,wikiLink,usedInTasks,craftsFor,craftsUsing,quantityOwned,quantityNeeded,isWatchlisted",
+        "&id,name,iconLink,wikiLink,usedInTasks,craftsFor,craftsUsing,quantityOwned,quantityNeeded,isWatchlisted,mapPositions",
       generalInformation: "&id,playerLevel,traders",
       tasks:
-        "&id,name,wikiLink,neededKeys,kappaRequired,lightkeeperRequired,minPlayerLevel,trader,taskRequirements,taskImageLink,map,objectives,isCompleted,isWatchlisted",
+        "&id,mapId,name,wikiLink,neededKeys,kappaRequired,lightkeeperRequired,minPlayerLevel,trader,taskRequirements,taskImageLink,map,objectives,isCompleted,isWatchlisted,mapPositions",
+      maps: "&id,name,wiki,normalizedName,imageLink",
     });
   }
 }

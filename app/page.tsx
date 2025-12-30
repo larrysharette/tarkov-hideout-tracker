@@ -1,19 +1,19 @@
-import Link from "next/link";
-import Image from "next/image";
-import { buttonVariants } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import type { Metadata } from "next";
+import Image from "next/image";
+
 import { Separator } from "@/components/ui/separator";
 
 export const metadata: Metadata = {
-  title: "Home",
+  title: "Adin's Tarkov Tracker",
   description:
-    "The ultimate Escape from Tarkov tracker for hideout upgrades, task progression, inventory management, and item watchlists. Plan your upgrade path, track task completion, manage your inventory, and never miss a task objective. Free Tarkov hideout calculator and task tracker.",
+    "Escape from Tarkov tracker: plan hideout upgrades, track tasks, manage inventory & watchlists. Free, easy, and no login required.",
   openGraph: {
-    title:
-      "Adin's Tarkov Tracker - Complete Escape from Tarkov Progress Tracker",
+    title: "Adin's Tarkov Tracker",
     description:
-      "Comprehensive Escape from Tarkov tracker for hideout upgrades, task progression, inventory management, and item watchlists. Track station levels, task completion, and plan your upgrade path.",
+      "Escape from Tarkov tracker: plan hideout upgrades, track tasks, manage inventory & watchlists. Free, easy, and no login required.",
+  },
+  alternates: {
+    canonical: "/",
   },
 };
 

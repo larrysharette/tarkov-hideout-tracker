@@ -1,22 +1,25 @@
-import { db } from "./index";
-import type { StoredState } from "@/lib/utils/data-export";
 import type { UserHideoutState } from "@/lib/types/hideout";
+import type { StoredState } from "@/lib/utils/data-export";
 import { parseUpgradeKey } from "@/lib/utils/hideout-data";
+
+import { db } from "./index";
 import {
-  updateStationLevel,
-  updateInventoryQuantity,
-  updateTraderLevel,
-  updatePlayerLevel,
-  toggleQuestCompletion,
-  setWatchlistQuantity,
   addTaskToWatchlist,
+  setWatchlistQuantity,
+  toggleQuestCompletion,
+  updateInventoryQuantity,
+  updatePlayerLevel,
+  updateStationLevel,
+  updateTraderLevel,
 } from "./updates";
 
 /**
  * Applies user state data to Dexie database
  * This is used by both migration and import functionality
  */
-export async function applyUserStateToDexie(userState: UserHideoutState): Promise<void> {
+export async function applyUserStateToDexie(
+  userState: UserHideoutState
+): Promise<void> {
   // Apply station levels
   if (userState.stationLevels) {
     const stationEntries = Object.entries(userState.stationLevels);
@@ -166,7 +169,8 @@ export async function migrateFromLocalStorage(): Promise<boolean> {
     console.log("[Migration] Parsed localStorage data:", {
       version: parsed.version,
       hasUserState: !!parsed.userState,
-      stationLevelsCount: Object.keys(parsed.userState?.stationLevels || {}).length,
+      stationLevelsCount: Object.keys(parsed.userState?.stationLevels || {})
+        .length,
       inventoryCount: Object.keys(parsed.userState?.inventory || {}).length,
       focusedUpgradesCount: parsed.userState?.focusedUpgrades?.length || 0,
     });
@@ -186,7 +190,9 @@ export async function migrateFromLocalStorage(): Promise<boolean> {
 
     // Delete localStorage key after successful migration
     localStorage.removeItem("tarkov-hideout-state");
-    console.log("[Migration] Migration completed successfully. localStorage key removed.");
+    console.log(
+      "[Migration] Migration completed successfully. localStorage key removed."
+    );
 
     return true;
   } catch (error) {
@@ -195,5 +201,3 @@ export async function migrateFromLocalStorage(): Promise<boolean> {
     return false;
   }
 }
-
-

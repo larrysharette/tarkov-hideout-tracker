@@ -1,16 +1,15 @@
 "use client";
 
+import { useLiveQuery } from "dexie-react-hooks";
 import { useMemo } from "react";
-import type { Task } from "@/lib/types/tasks";
+
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { useQuest } from "@/hooks/use-quest";
+import { db, type TaskRecord } from "@/lib/db";
 
-interface QuestHeaderProps {
-  tasks: Task[];
-}
-
-export function QuestHeader({ tasks }: QuestHeaderProps) {
+export function QuestHeader() {
+  const tasks = useLiveQuery(() => db.tasks.toArray(), [], [] as TaskRecord[]);
   const { isQuestCompleted } = useQuest();
 
   // Calculate Kappa Required progress

@@ -1,6 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -9,7 +11,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { exportCurrentState } from "@/lib/utils/data-export";
 
@@ -24,7 +25,7 @@ export function ExportDialog({ open, onOpenChange }: ExportDialogProps) {
 
   useEffect(() => {
     if (open) {
-      exportCurrentState().then((data) => {
+      void exportCurrentState().then((data) => {
         if (data) {
           setExportData(data);
         } else {

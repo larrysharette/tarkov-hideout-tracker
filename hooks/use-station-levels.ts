@@ -1,8 +1,9 @@
-import { useMemo } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
+import { useMemo } from "react";
+
 import { db } from "@/lib/db/index";
-import { updateStationLevel } from "@/lib/db/updates";
 import { getHideoutData } from "@/lib/db/queries";
+import { updateStationLevel } from "@/lib/db/updates";
 import type { TransformedHideoutData } from "@/lib/types/hideout";
 
 /**

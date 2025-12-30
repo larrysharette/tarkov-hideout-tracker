@@ -1,13 +1,22 @@
 "use client";
 
-import { useMemo, useState, useCallback } from "react";
-import { useInventory } from "@/hooks/use-inventory";
+import {
+  IconExternalLink,
+  IconEye,
+  IconEyeOff,
+  IconPlus,
+  IconTrash,
+} from "@tabler/icons-react";
 import { useLiveQuery } from "dexie-react-hooks";
-import { db, InventoryRecord } from "@/lib/db/index";
-import { Input } from "@/components/ui/input";
+import { useCallback, useMemo, useState } from "react";
+
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { ItemHoverCard } from "@/components/ui/item-hover-card";
+import { ItemSelector } from "@/components/ui/item-selector";
+import { SearchInput } from "@/components/ui/search-input";
 import {
   Select,
   SelectContent,
@@ -15,33 +24,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ItemHoverCard } from "@/components/ui/item-hover-card";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { ItemSelector } from "@/components/ui/item-selector";
-import {
-  IconExternalLink,
-  IconTrash,
-  IconPlus,
-  IconEye,
-  IconEyeOff,
-} from "@tabler/icons-react";
 import { useFuzzySearch } from "@/hooks/use-fuzzy-search";
-import { SearchInput } from "@/components/ui/search-input";
-import type { Item } from "@/lib/types/item";
-
-function formatNumber(num: number): string {
-  return num.toLocaleString("en-US");
-}
-
-interface InventoryItem {
-  name: string;
-  quantity: number;
-  itemData?: Item;
-}
+import { useInventory } from "@/hooks/use-inventory";
+import { db, type InventoryRecord } from "@/lib/db/index";
 
 type FilterType =
   | "all"
@@ -63,7 +53,6 @@ const FILTER_OPTIONS = [
 export function InventoryView() {
   const {
     inventory,
-    inventoryItems: inventoryRecords,
     currencies,
     isLoading,
     setInventoryQuantity,
@@ -137,14 +126,14 @@ export function InventoryView() {
 
   const handleQuantityChange = useCallback(
     (itemName: string, newQuantity: number) => {
-      setInventoryQuantity(itemName, Math.max(0, newQuantity));
+      void setInventoryQuantity(itemName, Math.max(0, newQuantity));
     },
     [setInventoryQuantity]
   );
 
   const handleRemoveItem = useCallback(
     (itemName: string) => {
-      setInventoryQuantity(itemName, 0);
+      void setInventoryQuantity(itemName, 0);
     },
     [setInventoryQuantity]
   );
@@ -152,15 +141,18 @@ export function InventoryView() {
   const handleQuickAdd = useCallback(() => {
     if (quickAddItem) {
       const currentQuantity = inventory[quickAddItem] || 0;
-      setInventoryQuantity(quickAddItem, currentQuantity + quickAddQuantity);
+      void setInventoryQuantity(
+        quickAddItem,
+        currentQuantity + quickAddQuantity
+      );
       setQuickAddItem("");
       setQuickAddQuantity(1);
     }
   }, [quickAddItem, quickAddQuantity, inventory, setInventoryQuantity]);
 
   const handleAddToWatchlist = useCallback(
-    (itemName: string, quantity: number = 1) => {
-      addToWatchlist(itemName, quantity);
+    (itemName: string, quantity = 1) => {
+      void addToWatchlist(itemName, quantity);
     },
     [addToWatchlist]
   );
@@ -170,17 +162,11 @@ export function InventoryView() {
       requiredItems: Array<{ item: { name: string }; count: number }>;
     }) => {
       craft.requiredItems.forEach((req) => {
-        addToWatchlist(req.item.name, req.count);
+        void addToWatchlist(req.item.name, req.count);
       });
     },
     [addToWatchlist]
   );
-
-  // Get item names for quick add combobox
-  const itemNames = useMemo(() => {
-    if (!allItems) return [];
-    return allItems.map((item) => item.name).sort();
-  }, [allItems]);
 
   if (isLoading) {
     return (
@@ -194,10 +180,6 @@ export function InventoryView() {
   }
 
   const totalItems = allItems.length;
-  const totalQuantity = allItems.reduce(
-    (sum, item) => sum + item.quantityOwned,
-    0
-  );
 
   return (
     <div className="space-y-6">
@@ -225,7 +207,7 @@ export function InventoryView() {
                 value={currencies.roubles || ""}
                 onChange={(e) => {
                   const value = parseInt(e.target.value, 10) || 0;
-                  updateCurrencies(value, 0, 0);
+                  void updateCurrencies(value, 0, 0);
                 }}
                 className="text-right font-medium"
                 placeholder="0"
@@ -241,7 +223,7 @@ export function InventoryView() {
                 value={currencies.euros || ""}
                 onChange={(e) => {
                   const value = parseInt(e.target.value, 10) || 0;
-                  updateCurrencies(0, value, 0);
+                  void updateCurrencies(0, value, 0);
                 }}
                 className="text-right font-medium"
                 placeholder="0"
@@ -257,7 +239,7 @@ export function InventoryView() {
                 value={currencies.dollars || ""}
                 onChange={(e) => {
                   const value = parseInt(e.target.value, 10) || 0;
-                  updateCurrencies(0, 0, value);
+                  void updateCurrencies(0, 0, value);
                 }}
                 className="text-right font-medium"
                 placeholder="0"
@@ -276,10 +258,8 @@ export function InventoryView() {
                 Quick Add Item
               </label>
               <ItemSelector
-                items={allItems || []}
-                itemNames={itemNames}
                 value={quickAddItem}
-                onValueChange={(value) => setQuickAddItem(value || "")}
+                onValueChange={(value) => setQuickAddItem(value?.name || "")}
                 placeholder="Search for an item..."
               />
             </div>
@@ -322,7 +302,7 @@ export function InventoryView() {
         </div>
         <Select
           value={filterType}
-          onValueChange={(value) => setFilterType(value as FilterType)}
+          onValueChange={(value) => setFilterType(value!)}
           items={FILTER_OPTIONS}
         >
           <SelectTrigger className="w-full md:w-[200px]">
@@ -444,7 +424,7 @@ export function InventoryView() {
                               onClick={(e) => {
                                 e.stopPropagation();
                                 if (isInWatchlist(inventoryItem.name)) {
-                                  removeFromWatchlist(inventoryItem.name);
+                                  void removeFromWatchlist(inventoryItem.name);
                                 } else {
                                   handleAddToWatchlist(
                                     inventoryItem.name,

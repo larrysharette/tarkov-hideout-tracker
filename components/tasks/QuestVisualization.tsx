@@ -1,10 +1,20 @@
 "use client";
 
-import { useMemo, useState, useCallback } from "react";
-import type { Task } from "@/lib/types/tasks";
+import { IconLock, IconLockOpen } from "@tabler/icons-react";
+import { useLiveQuery } from "dexie-react-hooks";
+import { useCallback, useMemo, useState } from "react";
+
 import { Card } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Menubar,
+  MenubarContent,
+  MenubarMenu,
+  MenubarRadioGroup,
+  MenubarRadioItem,
+  MenubarTrigger,
+} from "@/components/ui/menubar";
 import {
   Select,
   SelectContent,
@@ -12,26 +22,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Toggle } from "@/components/ui/toggle";
 import { useFuzzySearch } from "@/hooks/use-fuzzy-search";
-import {
-  Menubar,
-  MenubarMenu,
-  MenubarTrigger,
-  MenubarContent,
-  MenubarRadioGroup,
-  MenubarRadioItem,
-} from "@/components/ui/menubar";
-import { useQuest } from "@/hooks/use-quest";
 import { usePlayerInfo } from "@/hooks/use-player-info";
+import { useQuest } from "@/hooks/use-quest";
+import { db, type TaskRecord } from "@/lib/db";
+import type { Task } from "@/lib/types/tasks";
+
+import { SearchInput } from "../ui/search-input";
 import { QuestCard } from "./QuestCard";
 import { QuestDialog } from "./QuestDialog";
-import { SearchInput } from "../ui/search-input";
-import { Toggle } from "@/components/ui/toggle";
-import { IconLock, IconLockOpen } from "@tabler/icons-react";
-
-interface QuestVisualizationProps {
-  tasks: Task[];
-}
 
 type QuestStatus = "all" | "uncompleted" | "completed" | "locked" | "available";
 type RequirementFilter = "all" | "kappa" | "lightkeeper";
@@ -42,7 +42,8 @@ type QuestFilter = {
   searchQuery: string;
 };
 
-export default function QuestVisualization({ tasks }: QuestVisualizationProps) {
+export default function QuestVisualization() {
+  const tasks = useLiveQuery(() => db.tasks.toArray(), [], [] as TaskRecord[]);
   const { isQuestCompleted } = useQuest();
   const { playerLevel, setPlayerLevel } = usePlayerInfo();
   const [selectedQuest, setSelectedQuest] = useState<Task | null>(null);
@@ -296,11 +297,11 @@ export default function QuestVisualization({ tasks }: QuestVisualizationProps) {
               onChange={(e) => {
                 const value = e.target.value;
                 if (value === "") {
-                  setPlayerLevel(1);
+                  void setPlayerLevel(1);
                 } else {
                   const numValue = parseInt(value, 10);
                   if (!isNaN(numValue) && numValue >= 1 && numValue <= 100) {
-                    setPlayerLevel(numValue);
+                    void setPlayerLevel(numValue);
                   }
                 }
               }}
@@ -429,11 +430,11 @@ export default function QuestVisualization({ tasks }: QuestVisualizationProps) {
                 onChange={(e) => {
                   const value = e.target.value;
                   if (value === "") {
-                    setPlayerLevel(1);
+                    void setPlayerLevel(1);
                   } else {
                     const numValue = parseInt(value, 10);
                     if (!isNaN(numValue) && numValue >= 1 && numValue <= 100) {
-                      setPlayerLevel(numValue);
+                      void setPlayerLevel(numValue);
                     }
                   }
                 }}
@@ -548,17 +549,17 @@ export default function QuestVisualization({ tasks }: QuestVisualizationProps) {
       </Card>
 
       {/* Search Results Grid - Show when searching */}
-      {searchQuery.trim() ? (
+      {searchQuery.trim().length > 0 ? (
         <div className="mt-4">
           <div className="mb-4">
             <p className="text-sm text-muted-foreground">
-              Found {filteredTasks.length} quest
-              {filteredTasks.length !== 1 ? "s" : ""}
+              Found {fuzzySearchTasks.length} quest
+              {fuzzySearchTasks.length !== 1 ? "s" : ""}
             </p>
           </div>
-          {filteredTasks.length > 0 ? (
+          {fuzzySearchTasks.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-              {filteredTasks.map((quest: Task) => {
+              {fuzzySearchTasks.map((quest: Task) => {
                 const isLocked = isQuestLocked(quest);
                 return (
                   <QuestCard

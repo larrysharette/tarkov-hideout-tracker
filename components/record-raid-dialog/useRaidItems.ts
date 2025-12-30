@@ -1,4 +1,5 @@
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+
 import type { RaidItem } from "./types";
 
 const INITIAL_RAID_ITEMS: RaidItem[] = [
@@ -56,9 +57,9 @@ export function useRaidItems(resetTrigger: boolean) {
   const getComboboxRef = useCallback((id: string) => {
     return (el: HTMLDivElement | null) => {
       if (el) {
-        const input = el.querySelector(
+        const input = el.querySelector<HTMLInputElement>(
           'input[data-slot="input-group-control"]'
-        ) as HTMLInputElement;
+        )!;
         if (input) {
           comboboxRefs.current.set(id, input);
         }
@@ -76,4 +77,3 @@ export function useRaidItems(resetTrigger: boolean) {
     getComboboxRef,
   };
 }
-

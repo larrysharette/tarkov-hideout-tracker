@@ -1,15 +1,16 @@
 "use client";
 
-import * as React from "react";
 import { IconSearch, IconX } from "@tabler/icons-react";
+import * as React from "react";
+
 import {
   InputGroup,
   InputGroupAddon,
-  InputGroupInput,
   InputGroupButton,
+  InputGroupInput,
 } from "@/components/ui/input-group";
-import { cn } from "@/lib/utils";
 import useDebounce from "@/hooks/use-debounce";
+import { cn } from "@/lib/utils";
 
 export interface SearchInputProps
   extends Omit<

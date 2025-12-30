@@ -1,5 +1,7 @@
 "use client";
 
+import { useLiveQuery } from "dexie-react-hooks";
+
 import {
   Combobox,
   ComboboxContent,
@@ -8,18 +10,12 @@ import {
   ComboboxItem,
   ComboboxList,
 } from "@/components/ui/combobox";
-
-interface ItemWithIcon {
-  name: string;
-  iconLink?: string;
-  id?: string;
-}
+import { db, type InventoryRecord } from "@/lib/db";
+import { type Item } from "@/lib/types/item";
 
 interface ItemSelectorProps {
-  items: ItemWithIcon[];
-  itemNames: string[];
   value: string;
-  onValueChange: (value: string | null) => void;
+  onValueChange: (value: Item | null) => void;
   placeholder?: string;
   limit?: number;
   className?: string;
@@ -31,8 +27,6 @@ interface ItemSelectorProps {
  * Displays items with icons and names in a searchable dropdown
  */
 export function ItemSelector({
-  items,
-  itemNames,
   value,
   onValueChange,
   placeholder = "Search for an item...",
@@ -40,34 +34,58 @@ export function ItemSelector({
   className = "w-full",
   showClear = true,
 }: ItemSelectorProps) {
+  const items = useLiveQuery(
+    () => db.inventory.toArray(),
+    [],
+    [] as InventoryRecord[]
+  );
+
+  const itemNames = items.map((item) => ({
+    value: item.name,
+    label: item.name,
+    iconLink: item.iconLink,
+  }));
   return (
     <Combobox
       items={itemNames}
       value={value}
-      onValueChange={onValueChange}
+      onValueChange={(value) => {
+        const item = items.find((i) => i.name === value);
+        if (item) {
+          onValueChange(item);
+        } else {
+          onValueChange(null);
+        }
+      }}
       limit={limit}
     >
       <ComboboxInput
         showClear={showClear}
         placeholder={placeholder}
         className={className}
-      />
+        replaceInput={true}
+      >
+        {!!value ? (
+          <span className="text-nowrap text-xs text-foreground px-2 mr-auto">
+            {items.find((i) => i.name === value)?.name}
+          </span>
+        ) : undefined}
+      </ComboboxInput>
       <ComboboxContent>
         <ComboboxEmpty>No items found.</ComboboxEmpty>
         <ComboboxList>
-          {(itemName) => {
-            const item = items.find((i) => i.name === itemName);
+          {(item) => {
             return (
-              <ComboboxItem key={item?.id ?? itemName} value={itemName}>
+              <ComboboxItem key={item.value} value={item.value}>
                 <div className="flex items-center gap-2">
                   {item?.iconLink && (
                     <img
                       src={item.iconLink}
-                      alt={itemName}
+                      alt={item.label}
                       className="w-5 h-5 object-contain"
                     />
                   )}
-                  <span>{itemName}</span>
+                  <span>{item.label}</span>
                 </div>
               </ComboboxItem>
             );
@@ -77,4 +95,3 @@ export function ItemSelector({
     </Combobox>
   );
 }
-

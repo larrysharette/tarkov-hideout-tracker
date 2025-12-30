@@ -1,13 +1,13 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono, Noto_Sans } from "next/font/google";
 import "./globals.css";
 
 import { Analytics } from "@vercel/analytics/next";
-import { Navigation } from "@/components/Navigation";
-import { QuestProvider } from "@/contexts/QuestContext";
-import { VersionChecker } from "@/components/VersionChecker";
+import type { Metadata } from "next";
+import { Geist, Geist_Mono, Noto_Sans } from "next/font/google";
+
 import { DataSync } from "@/components/DataSync";
 import { Migration } from "@/components/Migration";
+import { Navigation } from "@/components/Navigation";
+import { VersionChecker } from "@/components/VersionChecker";
 
 const notoSans = Noto_Sans({ variable: "--font-sans" });
 
@@ -168,9 +168,7 @@ export default function RootLayout({
         <Migration />
         <VersionChecker />
         <Navigation />
-        <QuestProvider>
-          <main className="min-h-[calc(100svh-58px)]">{children}</main>
-        </QuestProvider>
+        <main className="min-h-[calc(100svh-58px)]">{children}</main>
         <Analytics />
       </body>
     </html>

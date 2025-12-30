@@ -1,14 +1,11 @@
 import type {
-  StationLevel,
-  UserHideoutState,
   ItemSummary,
+  StationLevel,
   TransformedHideoutData,
+  UserHideoutState,
 } from "@/lib/types/hideout";
-import {
-  getUpgradeKey,
-  getAllUniqueItems,
-  getAllStationLevels,
-} from "./hideout-data";
+
+import { getAllStationLevels, getUpgradeKey } from "./hideout-data";
 
 /**
  * Get unmet requirements for an upgrade

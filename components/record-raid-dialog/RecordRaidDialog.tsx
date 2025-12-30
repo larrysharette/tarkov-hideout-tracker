@@ -1,15 +1,9 @@
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
-import { db } from "@/lib/db/index";
-import { getHideoutData, getUserHideoutState } from "@/lib/db/queries";
-import { useInventory } from "@/hooks/use-inventory";
-import { useQuest } from "@/hooks/use-quest";
-import type {
-  UserHideoutState,
-  TransformedHideoutData,
-} from "@/lib/types/hideout";
+import { useCallback, useMemo, useState } from "react";
+
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -19,14 +13,21 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { useRaidItems } from "./useRaidItems";
-import { useSelectedTasks } from "./useSelectedTasks";
-import { useRaidData } from "./useRaidData";
+import { useInventory } from "@/hooks/use-inventory";
+import { useQuest } from "@/hooks/use-quest";
+import { db } from "@/lib/db/index";
+import { getHideoutData } from "@/lib/db/queries";
+import type {
+  TransformedHideoutData,
+  UserHideoutState,
+} from "@/lib/types/hideout";
+
 import { calculateRaidSummary } from "./calculateRaidSummary";
 import { RaidFormView } from "./RaidFormView";
 import { RaidSummaryView } from "./RaidSummaryView";
 import type { RaidSummary } from "./types";
+import { useRaidItems } from "./useRaidItems";
+import { useSelectedTasks } from "./useSelectedTasks";
 
 export function RecordRaidDialog() {
   const [open, setOpen] = useState(false);
@@ -37,6 +38,8 @@ export function RecordRaidDialog() {
   const { allTasks, markQuestsAsCompleted } = useQuest();
 
   // Query stations and general info for userState reconstruction
+  const tasks = useLiveQuery(() => db.tasks.toArray(), [], []);
+  const items = useLiveQuery(() => db.inventory.toArray(), [], []);
   const stations = useLiveQuery(() => db.stations.toArray(), []);
   const generalInfo = useLiveQuery(
     () => db.generalInformation.get("general"),
@@ -98,8 +101,6 @@ export function RecordRaidDialog() {
     };
   }, [stations, generalInfo, inventoryRecords, inventory, allTasks]);
 
-  // Custom hooks
-  const { items, tasks, isLoadingItems } = useRaidData(open);
   const { raidItems, addItem, removeItem, updateItem, getComboboxRef } =
     useRaidItems(!open);
   const {
@@ -129,7 +130,7 @@ export function RecordRaidDialog() {
     raidItems.forEach((raidItem) => {
       if (raidItem.item && raidItem.quantity > 0) {
         const currentQuantity = inventory[raidItem.item.name] || 0;
-        setInventoryQuantity(
+        void setInventoryQuantity(
           raidItem.item.name,
           currentQuantity + raidItem.quantity
         );
@@ -139,7 +140,7 @@ export function RecordRaidDialog() {
     // Mark completed tasks
     const completedTaskIds = getCompletedTaskIds();
     if (completedTaskIds.length > 0) {
-      markQuestsAsCompleted(completedTaskIds);
+      void markQuestsAsCompleted(completedTaskIds);
     }
 
     // Show summary screen
@@ -181,7 +182,6 @@ export function RecordRaidDialog() {
           <RaidSummaryView summary={summary} />
         ) : (
           <RaidFormView
-            isLoadingItems={isLoadingItems}
             items={items}
             tasks={tasks}
             raidItems={raidItems}

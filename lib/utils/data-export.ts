@@ -1,7 +1,8 @@
 import * as yaml from "yaml";
-import type { UserHideoutState } from "@/lib/types/hideout";
-import { getUserHideoutState } from "@/lib/db/queries";
+
 import { applyUserStateToDexie } from "@/lib/db/migration";
+import { getUserHideoutState } from "@/lib/db/queries";
+import type { UserHideoutState } from "@/lib/types/hideout";
 
 // Legacy type for backward compatibility with export/import
 export interface StoredState {
@@ -32,7 +33,7 @@ export function decodeData(yamlString: string): StoredState {
       throw new Error("Invalid YAML structure");
     }
     return parsed as StoredState;
-  } catch (error) {
+  } catch (_error) {
     throw new Error("Invalid YAML format. Please check your import data.");
   }
 }
@@ -41,7 +42,7 @@ export function decodeData(yamlString: string): StoredState {
  * Migration pipeline - migrates data from old versions to current version
  */
 function migrateData(data: StoredState): StoredState {
-  let migrated = data;
+  const migrated = data;
 
   // Version 1 -> 2 migrations would go here
   // if (migrated.version === 1) {

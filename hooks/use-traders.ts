@@ -1,5 +1,6 @@
-import { useMemo } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
+import { useMemo } from "react";
+
 import { db } from "@/lib/db/index";
 import { getTradersData } from "@/lib/db/queries";
 import type { TransformedTradersData } from "@/lib/types/hideout";

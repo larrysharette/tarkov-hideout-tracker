@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
-import { Card } from "@/components/ui/card";
+
 import { changelogEntries } from "@/changelog-data";
+import { Card } from "@/components/ui/card";
 
 export const metadata: Metadata = {
   title: "Changelog",
@@ -8,6 +9,9 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Changelog | Adin's Tarkov Tracker",
     description: "Version history and updates for Adin's Tarkov Tracker",
+  },
+  alternates: {
+    canonical: "/changelog",
   },
 };
 

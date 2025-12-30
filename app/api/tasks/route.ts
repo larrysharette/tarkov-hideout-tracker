@@ -1,5 +1,6 @@
-import { Task } from "@/lib/types/tasks";
 import { NextResponse } from "next/server";
+
+import { type Task } from "@/lib/types/tasks";
 
 // Revalidate every 24 hours (86400 seconds)
 export const revalidate = 86400;
@@ -44,6 +45,7 @@ const TASKS_QUERY = `
         name
       }
       objectives {
+        id
         description
         type
       }
@@ -89,7 +91,7 @@ export async function GET() {
     }
 
     // Check if data exists
-    if (!data.data || !data.data.tasks) {
+    if (!data.data?.tasks) {
       throw new Error("No tasks data received from API");
     }
 

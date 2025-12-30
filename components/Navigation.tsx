@@ -1,33 +1,36 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { IconDownload, IconMenu, IconUpload } from "@tabler/icons-react";
+import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { formatDistanceToNow } from "date-fns";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
+import { useEffect,useState } from "react";
+
+import { APP_VERSION, BUILD_DATE } from "@/changelog-data";
 import { ExportDialog } from "@/components/ExportDialog";
 import { ImportDialog } from "@/components/ImportDialog";
+import { Button } from "@/components/ui/button";
 import {
   Drawer,
+  DrawerClose,
   DrawerContent,
+  DrawerFooter,
   DrawerHeader,
   DrawerTitle,
-  DrawerFooter,
   DrawerTrigger,
-  DrawerClose,
 } from "@/components/ui/drawer";
-import { IconDownload, IconMenu, IconUpload } from "@tabler/icons-react";
 import { Separator } from "@/components/ui/separator";
-import { APP_VERSION, BUILD_DATE } from "@/changelog-data";
-import { ButtonGroup } from "./ui/button-group";
+import { cn } from "@/lib/utils";
+
 import { RecordRaidDialog } from "./record-raid-dialog/RecordRaidDialog";
+import { ButtonGroup } from "./ui/button-group";
 
 const navigationItems = [
   { href: "/hideout", label: "Hideout" },
   { href: "/tasks", label: "Tasks" },
   { href: "/inventory", label: "Inventory" },
   { href: "/watchlist", label: "Watchlist" },
+  { href: "/annotate", label: "Annotate" },
 ];
 
 export function Navigation() {
@@ -78,7 +81,10 @@ export function Navigation() {
                 <div className="flex flex-col gap-1 px-4 flex-1 overflow-y-auto">
                   <nav className="flex flex-col gap-1">
                     {navigationItems.map((item) => {
-                      const isActive = pathname === item.href;
+                      const isActive =
+                        pathname === item.href ||
+                        (item.href === "/annotate" &&
+                          pathname.startsWith("/annotate"));
                       return (
                         <DrawerClose key={item.href} asChild>
                           <Link
@@ -158,7 +164,10 @@ export function Navigation() {
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center gap-1 flex-1">
               {navigationItems.map((item) => {
-                const isActive = pathname === item.href;
+                const isActive =
+                  pathname === item.href ||
+                  (item.href === "/annotate" &&
+                    pathname.startsWith("/annotate"));
                 return (
                   <Link
                     key={item.href}

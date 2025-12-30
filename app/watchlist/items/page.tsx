@@ -1,5 +1,6 @@
+import { type Metadata } from "next";
+
 import { WatchlistView } from "@/components/watchlist/WatchlistView";
-import { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Watchlist - Items",

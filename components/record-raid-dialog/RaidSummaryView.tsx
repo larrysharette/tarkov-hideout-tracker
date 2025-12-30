@@ -1,8 +1,10 @@
 "use client";
 
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Badge } from "@/components/ui/badge";
 import { IconCheck } from "@tabler/icons-react";
+
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
+
 import type { RaidSummary } from "./types";
 
 interface RaidSummaryViewProps {

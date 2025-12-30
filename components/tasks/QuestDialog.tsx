@@ -1,11 +1,16 @@
 "use client";
 
+import {
+  IconArrowRight,
+  IconCheck,
+  IconEye,
+  IconEyeOff,
+} from "@tabler/icons-react";
 import { useCallback } from "react";
-import type { Task } from "@/lib/types/tasks";
+
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
@@ -14,18 +19,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { useQuest } from "@/hooks/use-quest";
 import { useTaskWatchlist } from "@/hooks/use-task-watchlist";
-import {
-  IconArrowRight,
-  IconArrowRightFromArc,
-  IconEye,
-  IconEyeOff,
-  IconCheck,
-} from "@tabler/icons-react";
-import { cn } from "@/lib/utils";
+import type { Task } from "@/lib/types/tasks";
 
 interface QuestDialogProps {
   quest: Task | null;
@@ -47,8 +46,8 @@ function formatObjectiveType(type: string): string {
 function getAllPrerequisiteIds(
   taskId: string,
   allQuests: Task[],
-  visited: Set<string> = new Set(),
-  result: Set<string> = new Set()
+  visited = new Set<string>(),
+  result = new Set<string>()
 ): string[] {
   // Avoid cycles - if we've already processed this task, return current results
   if (visited.has(taskId)) {
@@ -105,7 +104,7 @@ export function QuestDialog({
       (id) => !isQuestCompleted(id)
     );
     if (uncompletedPrereqs.length > 0) {
-      markQuestsAsCompleted(uncompletedPrereqs);
+      void markQuestsAsCompleted(uncompletedPrereqs);
     }
   }, [quest, allQuests, isQuestCompleted, markQuestsAsCompleted]);
 
@@ -113,9 +112,9 @@ export function QuestDialog({
   const handleToggleWatchlist = useCallback(() => {
     if (!quest) return;
     if (isTaskInWatchlist(quest.id)) {
-      removeTaskFromWatchlist(quest.id);
+      void removeTaskFromWatchlist(quest.id);
     } else {
-      addTaskToWatchlist(quest.id);
+      void addTaskToWatchlist(quest.id);
     }
   }, [quest, addTaskToWatchlist, removeTaskFromWatchlist, isTaskInWatchlist]);
 

@@ -1,5 +1,6 @@
+import { type Metadata } from "next";
+
 import { InventoryView } from "@/components/inventory/InventoryView";
-import { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Inventory Tracker",
@@ -7,6 +8,9 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Inventory Tracker | Adin's Tarkov Tracker",
     description: "Track your item inventory and record raids",
+  },
+  alternates: {
+    canonical: "/inventory",
   },
 };
 

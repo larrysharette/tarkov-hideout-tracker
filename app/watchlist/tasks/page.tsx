@@ -1,18 +1,14 @@
 "use client";
 
-import { useMemo, useState, useEffect, useCallback } from "react";
-import { useTaskWatchlist } from "@/hooks/use-task-watchlist";
+import { IconExternalLink, IconPlus, IconTrash } from "@tabler/icons-react";
+import { useLiveQuery } from "dexie-react-hooks";
+import { type Metadata } from "next";
+import { useCallback, useMemo, useState } from "react";
+
+import { QuestDialog } from "@/components/tasks/QuestDialog";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import {
   Combobox,
   ComboboxContent,
@@ -21,12 +17,33 @@ import {
   ComboboxItem,
   ComboboxList,
 } from "@/components/ui/combobox";
-import { IconExternalLink, IconTrash, IconPlus } from "@tabler/icons-react";
-import { useFuzzySearch } from "@/hooks/use-fuzzy-search";
 import { SearchInput } from "@/components/ui/search-input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { useFuzzySearch } from "@/hooks/use-fuzzy-search";
+import { useTaskWatchlist } from "@/hooks/use-task-watchlist";
+import { db, type TaskRecord } from "@/lib/db";
 import type { Task } from "@/lib/types/tasks";
-import { QuestDialog } from "@/components/tasks/QuestDialog";
-import { addVersionToApiUrl } from "@/lib/utils/version";
+
+export const metadata: Metadata = {
+  title: "Watchlist - Tasks",
+  description:
+    "Track tasks you need to complete. Add tasks to your watchlist to keep track of them.",
+  openGraph: {
+    title: "Watchlist - Tasks | Adin's Tarkov Tracker",
+    description:
+      "Track tasks you need to complete. Add tasks to your watchlist to keep track of them.",
+  },
+  alternates: {
+    canonical: "/watchlist/tasks",
+  },
+};
 
 export default function WatchlistTasksPage() {
   const {
@@ -36,31 +53,9 @@ export default function WatchlistTasksPage() {
     removeTaskFromWatchlist,
     isTaskInWatchlist,
   } = useTaskWatchlist();
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [isLoadingTasks, setIsLoadingTasks] = useState(false);
+  const tasks = useLiveQuery(() => db.tasks.toArray(), [], [] as TaskRecord[]);
   const [quickAddTask, setQuickAddTask] = useState<string>("");
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
-
-  // Fetch tasks from API
-  useEffect(() => {
-    setIsLoadingTasks(true);
-    fetch(addVersionToApiUrl("/api/tasks"))
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error("Failed to fetch tasks");
-        }
-        return res.json();
-      })
-      .then((data: Task[]) => {
-        setTasks(data);
-      })
-      .catch((error) => {
-        console.error("Error fetching tasks:", error);
-      })
-      .finally(() => {
-        setIsLoadingTasks(false);
-      });
-  }, []);
 
   // Get watchlist tasks
   const watchlistTasks = useMemo((): Task[] => {
@@ -92,7 +87,7 @@ export default function WatchlistTasksPage() {
 
   const handleRemoveTask = useCallback(
     (taskId: string) => {
-      removeTaskFromWatchlist(taskId);
+      void removeTaskFromWatchlist(taskId);
     },
     [removeTaskFromWatchlist]
   );
@@ -118,13 +113,13 @@ export default function WatchlistTasksPage() {
     if (quickAddTask) {
       const task = tasksMap.get(quickAddTask);
       if (task) {
-        addTaskToWatchlist(task.id);
+        void addTaskToWatchlist(task.id);
         setQuickAddTask("");
       }
     }
   }, [quickAddTask, addTaskToWatchlist, tasksMap]);
 
-  if (isLoading || isLoadingTasks) {
+  if (isLoading) {
     return (
       <div className="container mx-auto p-4 md:p-6 max-w-7xl">
         <div className="space-y-4">

@@ -1,6 +1,6 @@
-import { db } from "./index";
-import { getUpgradeKey } from "@/lib/utils/hideout-data";
 import type { StationLevel } from "@/lib/types/hideout";
+
+import { db } from "./index";
 
 /**
  * Update station level in Dexie
@@ -237,5 +237,90 @@ export async function addTaskToWatchlist(taskId: string): Promise<void> {
 export async function removeTaskFromWatchlist(taskId: string): Promise<void> {
   await db.tasks.update(taskId, {
     isWatchlisted: false,
+  });
+}
+
+/**
+ * Update task map position
+ */
+export async function updateTaskMapPosition(
+  taskId: string,
+  mapId: string,
+  position: { objectiveId?: string; x: number; y: number }
+): Promise<void> {
+  const task = await db.tasks.get(taskId);
+  if (!task) return;
+
+  const mapPositions = task.mapPositions || {};
+
+  if (!mapPositions[mapId]) {
+    mapPositions[mapId] = [position];
+  } else {
+    if (
+      !mapPositions[mapId].some((p) => p.objectiveId === position.objectiveId)
+    ) {
+      mapPositions[mapId].push(position);
+    }
+  }
+
+  await db.tasks.update(taskId, {
+    mapPositions,
+  });
+}
+
+/**
+ * Remove task map position
+ */
+export async function removeTaskMapPosition(
+  taskId: string,
+  mapId: string
+): Promise<void> {
+  const task = await db.tasks.get(taskId);
+  if (!task?.mapPositions) return;
+
+  const mapPositions = { ...task.mapPositions };
+  delete mapPositions[mapId];
+
+  await db.tasks.update(taskId, {
+    mapPositions:
+      Object.keys(mapPositions).length > 0 ? mapPositions : undefined,
+  });
+}
+
+/**
+ * Update item map position
+ */
+export async function updateItemMapPosition(
+  itemName: string,
+  mapId: string,
+  position: { x: number; y: number }
+): Promise<void> {
+  const item = await db.inventory.where("name").equals(itemName).first();
+  if (!item) return;
+
+  const mapPositions = item.mapPositions || {};
+  mapPositions[mapId] = position;
+
+  await db.inventory.update(item.id, {
+    mapPositions,
+  });
+}
+
+/**
+ * Remove item map position
+ */
+export async function removeItemMapPosition(
+  itemName: string,
+  mapId: string
+): Promise<void> {
+  const item = await db.inventory.where("name").equals(itemName).first();
+  if (!item?.mapPositions) return;
+
+  const mapPositions = { ...item.mapPositions };
+  delete mapPositions[mapId];
+
+  await db.inventory.update(item.id, {
+    mapPositions:
+      Object.keys(mapPositions).length > 0 ? mapPositions : undefined,
   });
 }

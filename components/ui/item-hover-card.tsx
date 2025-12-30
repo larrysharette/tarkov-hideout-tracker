@@ -1,19 +1,19 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { IconExternalLink, IconEye } from "@tabler/icons-react";
+import { useEffect,useState } from "react";
+
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import {
   HoverCard,
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Button } from "@/components/ui/button";
-import { IconExternalLink, IconEye } from "@tabler/icons-react";
 import type { Item } from "@/lib/types/item";
 
 interface ItemHoverCardProps {

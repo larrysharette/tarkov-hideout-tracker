@@ -1,5 +1,6 @@
-import { useCallback, useMemo } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
+import { useCallback, useMemo } from "react";
+
 import { db } from "@/lib/db/index";
 import {
   addTaskToWatchlist as addTaskToWatchlistDb,

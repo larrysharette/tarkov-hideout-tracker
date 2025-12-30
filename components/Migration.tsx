@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { syncAllData } from "@/lib/db/sync";
-import { migrateFromLocalStorage } from "@/lib/db/migration";
+
 import { db } from "@/lib/db/index";
+import { migrateFromLocalStorage } from "@/lib/db/migration";
+import { syncAllData } from "@/lib/db/sync";
 
 /**
  * Component that handles one-time migration from localStorage to IndexedDB
@@ -22,16 +23,20 @@ export function Migration() {
     async function runMigration() {
       try {
         console.log("[Migration] Starting migration process...");
-        
+
         // Check if localStorage key exists before syncing
         if (typeof window !== "undefined") {
           const stored = localStorage.getItem("tarkov-hideout-state");
           if (!stored) {
-            console.log("[Migration] No localStorage data found, skipping migration");
+            console.log(
+              "[Migration] No localStorage data found, skipping migration"
+            );
             hasRunRef.current = true;
             return;
           }
-          console.log("[Migration] Found localStorage data, proceeding with migration");
+          console.log(
+            "[Migration] Found localStorage data, proceeding with migration"
+          );
         }
 
         // Wait for database to be ready
@@ -58,7 +63,10 @@ export function Migration() {
         // This is needed because migration needs stations, items, tasks, etc. to exist
         console.log("[Migration] Syncing base data from API...");
         await syncAllData().catch((err) => {
-          console.error("[Migration] Error syncing data before migration:", err);
+          console.error(
+            "[Migration] Error syncing data before migration:",
+            err
+          );
           // Continue even if sync fails - might have cached data
         });
         console.log("[Migration] Base data sync completed");
@@ -67,9 +75,13 @@ export function Migration() {
         console.log("[Migration] Calling migrateFromLocalStorage...");
         const migrationOccurred = await migrateFromLocalStorage();
         if (migrationOccurred) {
-          console.log("[Migration] Migration from localStorage completed successfully");
+          console.log(
+            "[Migration] Migration from localStorage completed successfully"
+          );
         } else {
-          console.log("[Migration] No migration occurred (no localStorage data or already migrated)");
+          console.log(
+            "[Migration] No migration occurred (no localStorage data or already migrated)"
+          );
         }
 
         hasRunRef.current = true;
@@ -80,9 +92,8 @@ export function Migration() {
       }
     }
 
-    runMigration();
+    void runMigration();
   }, []);
 
   return null;
 }
-

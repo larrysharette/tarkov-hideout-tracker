@@ -1,7 +1,7 @@
 "use client";
 
-import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useQuest } from "@/hooks/use-quest";
 import type { Task } from "@/lib/types/tasks";
@@ -56,7 +56,7 @@ export function QuestCard({ quest, isLocked, onClick }: QuestCardProps) {
         <Checkbox
           checked={isCompleted}
           onCheckedChange={() => {
-            toggleQuestCompletion(quest.id);
+            void toggleQuestCompletion(quest.id);
           }}
           onClick={(e) => e.stopPropagation()}
           className="mt-0.5"
@@ -65,4 +65,3 @@ export function QuestCard({ quest, isLocked, onClick }: QuestCardProps) {
     </Card>
   );
 }
-

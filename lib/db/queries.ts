@@ -1,16 +1,17 @@
-import { db } from "./index";
 import type {
-  StationRecord,
-  InventoryRecord,
-  TaskRecord,
-  GeneralInformationRecord,
-} from "./index";
-import type {
+  StationLevel,
   TransformedHideoutData,
   TransformedTradersData,
-  StationLevel,
 } from "@/lib/types/hideout";
 import { getUpgradeKey } from "@/lib/utils/hideout-data";
+
+import type {
+  GeneralInformationRecord,
+  InventoryRecord,
+  StationRecord,
+  TaskRecord,
+} from "./index";
+import { db } from "./index";
 
 /**
  * Get all stations from Dexie
@@ -69,7 +70,7 @@ export async function getHideoutData(): Promise<TransformedHideoutData | null> {
 export async function getTradersData(): Promise<TransformedTradersData | null> {
   const generalInfo = await db.generalInformation.get("general");
 
-  if (!generalInfo || !generalInfo.traders) {
+  if (!generalInfo?.traders) {
     return null;
   }
 

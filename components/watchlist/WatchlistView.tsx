@@ -1,13 +1,23 @@
 "use client";
 
-import { useMemo, useState, useCallback } from "react";
-import { useInventory } from "@/hooks/use-inventory";
+import {
+  IconExternalLink,
+  IconLayoutGrid,
+  IconPlus,
+  IconTable,
+  IconTrash,
+  IconTrashX,
+} from "@tabler/icons-react";
 import { useLiveQuery } from "dexie-react-hooks";
-import { db, InventoryRecord } from "@/lib/db/index";
-import { Input } from "@/components/ui/input";
+import { useCallback, useMemo, useState } from "react";
+
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { ItemHoverCard } from "@/components/ui/item-hover-card";
+import { ItemSelector } from "@/components/ui/item-selector";
+import { SearchInput } from "@/components/ui/search-input";
 import {
   Table,
   TableBody,
@@ -17,28 +27,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { ItemSelector } from "@/components/ui/item-selector";
-import { ItemHoverCard } from "@/components/ui/item-hover-card";
-import {
-  IconExternalLink,
-  IconTrash,
-  IconPlus,
-  IconLayoutGrid,
-  IconTable,
-  IconTrashX,
-} from "@tabler/icons-react";
 import { useFuzzySearch } from "@/hooks/use-fuzzy-search";
-import { SearchInput } from "@/components/ui/search-input";
-import type { Item } from "@/lib/types/item";
+import { useInventory } from "@/hooks/use-inventory";
+import { db, type InventoryRecord } from "@/lib/db/index";
 
 function formatNumber(num: number): string {
   return num.toLocaleString("en-US");
-}
-
-interface WatchlistItem {
-  name: string;
-  quantity: number;
-  itemData?: Item;
 }
 
 export function WatchlistView() {
@@ -47,7 +41,6 @@ export function WatchlistView() {
     addToWatchlist,
     setWatchlistQuantity,
     removeFromWatchlist,
-    inventoryItems,
     inventory,
   } = useInventory();
 
@@ -61,16 +54,6 @@ export function WatchlistView() {
   const [quickAddItem, setQuickAddItem] = useState<string>("");
   const [quickAddQuantity, setQuickAddQuantity] = useState<number>(1);
   const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
-
-  // Create a map of item names to item data for quick lookup
-  const itemsMap = useMemo(() => {
-    if (!watchlistItems) return new Map<string, Item>();
-    const map = new Map<string, Item>();
-    watchlistItems.forEach((item) => {
-      map.set(item.name, item);
-    });
-    return map;
-  }, [watchlistItems]);
 
   // Fuzzy search for watchlist items
   const {
@@ -90,14 +73,14 @@ export function WatchlistView() {
 
   const handleQuantityChange = useCallback(
     (itemName: string, newQuantity: number) => {
-      setWatchlistQuantity(itemName, newQuantity);
+      void setWatchlistQuantity(itemName, newQuantity);
     },
     [setWatchlistQuantity]
   );
 
   const handleRemoveItem = useCallback(
     (itemName: string) => {
-      removeFromWatchlist(itemName);
+      void removeFromWatchlist(itemName);
     },
     [removeFromWatchlist]
   );
@@ -122,7 +105,7 @@ export function WatchlistView() {
     });
 
     completedItems.forEach((item) => {
-      removeFromWatchlist(item.name);
+      void removeFromWatchlist(item.name);
     });
   }, [watchlistItems, inventory, removeFromWatchlist]);
 
@@ -133,12 +116,6 @@ export function WatchlistView() {
       return inventoryQuantity >= item.quantityNeeded;
     }).length;
   }, [watchlistItems, inventory]);
-
-  // Get item names for quick add combobox
-  const itemNames = useMemo(() => {
-    if (!watchlistItems) return [];
-    return watchlistItems.map((item) => item.name).sort();
-  }, [watchlistItems]);
 
   if (isLoading) {
     return (
@@ -168,10 +145,8 @@ export function WatchlistView() {
                 Quick Add Item
               </label>
               <ItemSelector
-                items={watchlistItems || []}
-                itemNames={itemNames}
                 value={quickAddItem}
-                onValueChange={(value) => setQuickAddItem(value || "")}
+                onValueChange={(value) => setQuickAddItem(value?.name || "")}
                 placeholder="Search for an item..."
               />
             </div>
@@ -213,7 +188,7 @@ export function WatchlistView() {
         />
         <ToggleGroup
           value={[viewMode]}
-          onValueChange={(value: any) => {
+          onValueChange={(value: string | string[]) => {
             const selectedValue = Array.isArray(value) ? value[0] : value;
             if (selectedValue === "grid" || selectedValue === "table") {
               setViewMode(selectedValue);

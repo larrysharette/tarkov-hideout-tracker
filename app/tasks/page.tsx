@@ -1,9 +1,7 @@
-import QuestVisualization from "@/components/tasks/QuestVisualization";
-import { QuestHeader } from "@/components/tasks/QuestHeader";
-import type { Task } from "@/lib/types/tasks";
 import type { Metadata } from "next";
-import { headers } from "next/headers";
-import { addVersionToApiUrl } from "@/lib/utils/version";
+
+import { QuestHeader } from "@/components/tasks/QuestHeader";
+import QuestVisualization from "@/components/tasks/QuestVisualization";
 
 export const metadata: Metadata = {
   title: "Task Tracker",
@@ -14,52 +12,16 @@ export const metadata: Metadata = {
     description:
       "Browse and track all Escape from Tarkov tasks organized by trader and level.",
   },
+  alternates: {
+    canonical: "/tasks",
+  },
 };
 
-async function getTasks(): Promise<Task[]> {
-  try {
-    // Get the host from headers for server-side fetch
-    const headersList = await headers();
-    const host = headersList.get("host") || "localhost:3000";
-    const protocol = process.env.NODE_ENV === "production" ? "https" : "http";
-    const baseUrl = `${protocol}://${host}`;
-
-    const response = await fetch(addVersionToApiUrl(`${baseUrl}/api/tasks`), {
-      next: { revalidate: 86400 }, // Revalidate every 24 hours
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch tasks: ${response.status}`);
-    }
-
-    const tasks: Task[] = await response.json();
-    return tasks;
-  } catch (error) {
-    console.error("Error fetching tasks:", error);
-    return [];
-  }
-}
-
 export default async function TasksPage() {
-  const tasks = await getTasks();
-
   return (
     <div className="px-4 md:px-6 py-6">
-      <QuestHeader tasks={tasks} />
-
-      {tasks.length === 0 ? (
-        <div className="flex items-center justify-center h-[80vh] bg-card border border-border rounded-lg">
-          <div className="text-center">
-            <p className="text-muted-foreground mb-2">Loading task data...</p>
-            <p className="text-sm text-muted-foreground">
-              If this persists, there may be an issue fetching data from the
-              API.
-            </p>
-          </div>
-        </div>
-      ) : (
-        <QuestVisualization tasks={tasks} />
-      )}
+      <QuestHeader />
+      <QuestVisualization />
     </div>
   );
 }

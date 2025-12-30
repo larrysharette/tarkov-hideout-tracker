@@ -1,17 +1,16 @@
 "use client";
 
-import { useMemo } from "react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { IconPlus } from "@tabler/icons-react";
+
+import { Button } from "@/components/ui/button";
+import { type Item } from "@/lib/types/item";
 import type { Task } from "@/lib/types/tasks";
-import type { RaidItem, SelectedTask } from "./types";
+
 import { RaidItemRow } from "./RaidItemRow";
 import { TaskSelector } from "./TaskSelector";
-import { Item } from "@/lib/types/item";
+import type { RaidItem, SelectedTask } from "./types";
 
 interface RaidFormViewProps {
-  isLoadingItems: boolean;
   items: Item[];
   tasks: Task[];
   raidItems: RaidItem[];
@@ -27,9 +26,6 @@ interface RaidFormViewProps {
 }
 
 export function RaidFormView({
-  isLoadingItems,
-  items,
-  tasks,
   raidItems,
   selectedTasks,
   playerLevel,
@@ -41,61 +37,21 @@ export function RaidFormView({
   onTaskRemove,
   getComboboxRef,
 }: RaidFormViewProps) {
-  const itemNames = items.map((item) => item.name);
-
-  // Get related tasks for items being added
-  const relatedTasksForRaid = useMemo(() => {
-    const relatedTaskIds = new Set<string>();
-    raidItems.forEach((raidItem) => {
-      if (raidItem.item && raidItem.quantity > 0) {
-        raidItem.item.usedInTasks?.forEach((task) => {
-          relatedTaskIds.add(task.id);
-        });
-      }
-    });
-    return tasks.filter((task) => relatedTaskIds.has(task.id));
-  }, [raidItems, tasks]);
-
   return (
     <>
       <div className="flex-1 overflow-y-auto space-y-3 min-h-0">
-        {isLoadingItems ? (
-          <div className="text-center py-8 text-muted-foreground">
-            Loading items...
-          </div>
-        ) : (
-          <>
-            {relatedTasksForRaid.length > 0 && (
-              <div className="bg-muted/50 rounded-lg p-3 space-y-2">
-                <div className="text-sm font-semibold">
-                  Related Tasks ({relatedTasksForRaid.length})
-                </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {relatedTasksForRaid.map((task) => (
-                    <Badge key={task.id} variant="outline" className="text-xs">
-                      {task.name}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            )}
-            {raidItems.map((raidItem, index) => (
-              <RaidItemRow
-                key={raidItem.id}
-                raidItem={raidItem}
-                index={index}
-                items={items}
-                itemNames={itemNames}
-                isLastItem={index === raidItems.length - 1}
-                canRemove={raidItems.length > 1}
-                onUpdate={onUpdateItem}
-                onRemove={onRemoveItem}
-                onAddItem={onAddItem}
-                getComboboxRef={getComboboxRef}
-              />
-            ))}
-          </>
-        )}
+        {raidItems.map((raidItem, index) => (
+          <RaidItemRow
+            key={raidItem.id}
+            raidItem={raidItem}
+            isLastItem={index === raidItems.length - 1}
+            canRemove={raidItems.length > 1}
+            onUpdate={onUpdateItem}
+            onRemove={onRemoveItem}
+            onAddItem={onAddItem}
+            getComboboxRef={getComboboxRef}
+          />
+        ))}
       </div>
 
       <div className="flex gap-2 pt-4 border-t">
@@ -110,7 +66,6 @@ export function RaidFormView({
       </div>
 
       <TaskSelector
-        tasks={tasks}
         selectedTasks={selectedTasks}
         playerLevel={playerLevel}
         onTaskSelect={onTaskSelect}

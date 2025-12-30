@@ -1,5 +1,6 @@
-import { GraphQLItemsResponse, Item } from "@/lib/types/item";
 import { NextResponse } from "next/server";
+
+import { type GraphQLItemsResponse, type Item } from "@/lib/types/item";
 
 // Revalidate every 24 hours (86400 seconds)
 export const revalidate = 86400;
@@ -75,7 +76,7 @@ export async function GET() {
     }
 
     // Check if data exists
-    if (!data.data || !data.data.items) {
+    if (!data.data?.items) {
       throw new Error("No items data received from API");
     }
 

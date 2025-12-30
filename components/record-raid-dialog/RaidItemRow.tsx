@@ -1,17 +1,15 @@
 "use client";
 
+import { IconX } from "@tabler/icons-react";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ItemSelector } from "@/components/ui/item-selector";
-import { IconX } from "@tabler/icons-react";
-import type { Item } from "@/lib/types/item";
+
 import type { RaidItem } from "./types";
 
 interface RaidItemRowProps {
   raidItem: RaidItem;
-  index: number;
-  items: Item[];
-  itemNames: string[];
   isLastItem: boolean;
   canRemove: boolean;
   onUpdate: (id: string, updates: Partial<RaidItem>) => void;
@@ -22,9 +20,6 @@ interface RaidItemRowProps {
 
 export function RaidItemRow({
   raidItem,
-  index,
-  items,
-  itemNames,
   isLastItem,
   canRemove,
   onUpdate,
@@ -39,12 +34,9 @@ export function RaidItemRow({
         ref={getComboboxRef(raidItem.id)}
       >
         <ItemSelector
-          items={items}
-          itemNames={itemNames}
-          value={raidItem.item?.name || ""}
+          value={raidItem.item?.id || ""}
           onValueChange={(value) => {
-            const selectedItem = items.find((item) => item.name === value);
-            onUpdate(raidItem.id, { item: selectedItem || null });
+            void onUpdate(raidItem.id, { item: value || null });
           }}
           placeholder="Search for an item..."
         />

@@ -1,22 +1,20 @@
 "use client";
 
-import { useMemo, useState, useCallback } from "react";
-import { useLiveQuery } from "dexie-react-hooks";
-import { db } from "@/lib/db/index";
-import { getHideoutData, getUserHideoutState } from "@/lib/db/queries";
-import { useStationLevels } from "@/hooks/use-station-levels";
-import { useInventory } from "@/hooks/use-inventory";
-import { usePlayerInfo } from "@/hooks/use-player-info";
-import { useQuest } from "@/hooks/use-quest";
-import { toggleFocusedUpgrade as toggleFocusedUpgradeDb } from "@/lib/db/updates";
 import {
-  calculateItemSummary,
-  getAvailableUpgrades,
-} from "@/lib/utils/hideout-calculations";
-import { getUpgradeKey } from "@/lib/utils/hideout-data";
-import type { UserHideoutState } from "@/lib/types/hideout";
-import { Input } from "@/components/ui/input";
+  IconChevronDown,
+  IconChevronUp,
+  IconEye,
+  IconEyeOff,
+  IconSelector,
+} from "@tabler/icons-react";
+import { useLiveQuery } from "dexie-react-hooks";
+import { useCallback, useMemo, useState } from "react";
+
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { SearchInput } from "@/components/ui/search-input";
 import {
   Select,
   SelectContent,
@@ -32,20 +30,20 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import {
-  IconChevronUp,
-  IconChevronDown,
-  IconSelector,
-  IconEye,
-  IconEyeOff,
-} from "@tabler/icons-react";
-import { cn } from "@/lib/utils";
-import type { ItemSummary } from "@/lib/types/hideout";
-import { RecordRaidDialog } from "../record-raid-dialog/RecordRaidDialog";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useFuzzySearch } from "@/hooks/use-fuzzy-search";
-import { SearchInput } from "@/components/ui/search-input";
+import { useInventory } from "@/hooks/use-inventory";
+import { usePlayerInfo } from "@/hooks/use-player-info";
+import { useQuest } from "@/hooks/use-quest";
+import { useStationLevels } from "@/hooks/use-station-levels";
+import { db } from "@/lib/db/index";
+import type { UserHideoutState } from "@/lib/types/hideout";
+import type { ItemSummary } from "@/lib/types/hideout";
+import { cn } from "@/lib/utils";
+import {
+  calculateItemSummary,
+  getAvailableUpgrades,
+} from "@/lib/utils/hideout-calculations";
+import { getUpgradeKey } from "@/lib/utils/hideout-data";
 
 type SortField = keyof ItemSummary;
 type SortDirection = "asc" | "desc" | null;
@@ -135,18 +133,6 @@ export function ItemSummaryTable() {
     if (!hideoutData || !userState) return [];
     return getAvailableUpgrades(hideoutData, userState);
   }, [hideoutData, userState]);
-
-  // Toggle focused upgrade
-  const toggleFocusedUpgrade = useCallback(
-    async (stationId: string, level: number) => {
-      try {
-        await toggleFocusedUpgradeDb(stationId, level);
-      } catch (err) {
-        console.error("Error toggling focused upgrade:", err);
-      }
-    },
-    []
-  );
 
   const isLoading = isLoadingStations || !userState;
 
@@ -320,7 +306,7 @@ export function ItemSummaryTable() {
           <div className="flex gap-2">
             <Select
               value={filterType}
-              onValueChange={(value) => setFilterType(value as FilterType)}
+              onValueChange={(value) => setFilterType(value!)}
               items={FILTER_ITEMS}
             >
               <SelectTrigger className="w-full md:w-[180px]">
@@ -459,7 +445,7 @@ export function ItemSummaryTable() {
                           className="h-5 w-5 shrink-0"
                           onClick={() => {
                             if (isWatched) {
-                              removeFromWatchlist(item.itemName);
+                              void removeFromWatchlist(item.itemName);
                             } else {
                               const quantityToAdd = Math.max(
                                 1,
@@ -467,7 +453,7 @@ export function ItemSummaryTable() {
                                   ? item.requiredNow - item.owned
                                   : item.totalRequired - item.owned
                               );
-                              addToWatchlist(item.itemName, quantityToAdd);
+                              void addToWatchlist(item.itemName, quantityToAdd);
                             }
                           }}
                           title={
@@ -492,7 +478,7 @@ export function ItemSummaryTable() {
                         value={item.owned || ""}
                         onChange={(e) => {
                           const value = parseInt(e.target.value, 10) || 0;
-                          setInventoryQuantity(item.itemName, value);
+                          void setInventoryQuantity(item.itemName, value);
                         }}
                         placeholder="0"
                         className="w-14 h-6 text-xs text-right font-medium px-1.5"
@@ -697,7 +683,7 @@ export function ItemSummaryTable() {
                           className="h-7 w-7"
                           onClick={() => {
                             if (isWatched) {
-                              removeFromWatchlist(item.itemName);
+                              void removeFromWatchlist(item.itemName);
                             } else {
                               const quantityToAdd = Math.max(
                                 1,
@@ -705,7 +691,7 @@ export function ItemSummaryTable() {
                                   ? remainingForDisplay
                                   : 1
                               );
-                              addToWatchlist(item.itemName, quantityToAdd);
+                              void addToWatchlist(item.itemName, quantityToAdd);
                             }
                           }}
                           title={
@@ -754,7 +740,7 @@ export function ItemSummaryTable() {
                           value={item.owned || ""}
                           onChange={(e) => {
                             const value = parseInt(e.target.value, 10) || 0;
-                            setInventoryQuantity(item.itemName, value);
+                            void setInventoryQuantity(item.itemName, value);
                           }}
                           placeholder="0"
                           className="w-20 text-right font-medium"

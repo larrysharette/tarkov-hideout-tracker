@@ -25,6 +25,7 @@ export interface TaskRequirement {
 }
 
 export interface TaskObjective {
+  id: string;
   description: string;
   type: string;
 }

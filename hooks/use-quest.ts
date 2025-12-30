@@ -1,9 +1,10 @@
-import { useCallback } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
+import { useCallback } from "react";
+
 import { db } from "@/lib/db/index";
 import {
-  toggleQuestCompletion as toggleQuestCompletionDb,
   markQuestsAsCompleted as markQuestsAsCompletedDb,
+  toggleQuestCompletion as toggleQuestCompletionDb,
 } from "@/lib/db/updates";
 
 /**

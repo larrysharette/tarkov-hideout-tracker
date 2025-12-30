@@ -1,7 +1,5 @@
 "use client";
 
-import { useTraders } from "@/hooks/use-traders";
-import { usePlayerInfo } from "@/hooks/use-player-info";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -10,6 +8,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { usePlayerInfo } from "@/hooks/use-player-info";
+import { useTraders } from "@/hooks/use-traders";
 
 export function TraderLevelSelector() {
   const { tradersData, isLoading, getTraderLevel } = useTraders();

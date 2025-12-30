@@ -1,9 +1,12 @@
 "use client";
 
+import { IconX } from "@tabler/icons-react";
+import { useLiveQuery } from "dexie-react-hooks";
 import { useCallback } from "react";
-import { Card } from "@/components/ui/card";
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Combobox,
@@ -13,29 +16,38 @@ import {
   ComboboxItem,
   ComboboxList,
 } from "@/components/ui/combobox";
-import { IconX } from "@tabler/icons-react";
-import type { Task } from "@/lib/types/tasks";
-import type { SelectedTask } from "./types";
 import { useQuest } from "@/hooks/use-quest";
+import { db } from "@/lib/db";
+import type { Task } from "@/lib/types/tasks";
+
+import type { SelectedTask } from "./types";
 
 interface TaskSelectorProps {
-  tasks: Task[];
   selectedTasks: Map<string, SelectedTask>;
   playerLevel: number;
   onTaskSelect: (task: Task) => void;
   onTaskToggle: (taskId: string, completed: boolean) => void;
   onTaskRemove: (taskId: string) => void;
+  mapId?: string;
 }
 
 export function TaskSelector({
-  tasks,
   selectedTasks,
   playerLevel,
   onTaskSelect,
   onTaskToggle,
   onTaskRemove,
+  mapId,
 }: TaskSelectorProps) {
   const { isQuestCompleted } = useQuest();
+  const tasks = useLiveQuery(
+    () =>
+      mapId
+        ? db.tasks.where("map.id").equals(mapId).toArray()
+        : db.tasks.toArray(),
+    [mapId],
+    []
+  );
   const taskNames = tasks.map((task) => task.name);
 
   const isTaskLocked = useCallback(
@@ -179,4 +191,3 @@ export function TaskSelector({
     </div>
   );
 }
-

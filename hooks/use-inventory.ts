@@ -1,13 +1,14 @@
-import { useMemo, useCallback } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
+import { useCallback,useMemo } from "react";
+
+import type { InventoryRecord } from "@/lib/db/index";
 import { db } from "@/lib/db/index";
 import {
-  updateInventoryQuantity,
   addToWatchlist as addToWatchlistDb,
   removeFromWatchlist as removeFromWatchlistDb,
   setWatchlistQuantity as setWatchlistQuantityDb,
+  updateInventoryQuantity,
 } from "@/lib/db/updates";
-import type { InventoryRecord } from "@/lib/db/index";
 
 const CURRENCY_ITEMS = new Set([
   "Roubles",
