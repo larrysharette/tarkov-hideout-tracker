@@ -10,7 +10,8 @@ import {
   ComboboxItem,
   ComboboxList,
 } from "@/components/ui/combobox";
-import { db, type InventoryRecord } from "@/lib/db";
+import { db } from "@/lib/db/index";
+import { type InventoryRecord } from "@/lib/db/types";
 import { type Item } from "@/lib/types/item";
 
 interface ItemSelectorProps {

@@ -9,14 +9,14 @@ import { getUpgradeKey } from "@/lib/utils/hideout-data";
 import { addVersionToApiUrl } from "@/lib/utils/version";
 
 import { type Map } from "../types/maps";
+import { db } from "./index";
 import type {
   GeneralInformationRecord,
   InventoryRecord,
   MapRecord,
   StationRecord,
   TaskRecord,
-} from "./index";
-import { db } from "./index";
+} from "./types";
 
 /**
  * Sync hideout stations data from API to Dexie

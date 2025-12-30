@@ -10,7 +10,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { db, type MapRecord } from "@/lib/db";
+import { db } from "@/lib/db/index";
+import { type MapRecord } from "@/lib/db/types";
 
 import { useSearchState } from "./useSearchState";
 

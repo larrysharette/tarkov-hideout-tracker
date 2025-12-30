@@ -1,8 +1,8 @@
 import { useLiveQuery } from "dexie-react-hooks";
-import { useCallback,useMemo } from "react";
+import { useCallback, useMemo } from "react";
 
-import type { InventoryRecord } from "@/lib/db/index";
 import { db } from "@/lib/db/index";
+import type { InventoryRecord } from "@/lib/db/types";
 import {
   addToWatchlist as addToWatchlistDb,
   removeFromWatchlist as removeFromWatchlistDb,

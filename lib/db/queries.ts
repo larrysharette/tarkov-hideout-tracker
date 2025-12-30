@@ -5,13 +5,13 @@ import type {
 } from "@/lib/types/hideout";
 import { getUpgradeKey } from "@/lib/utils/hideout-data";
 
+import { db } from "./index";
 import type {
   GeneralInformationRecord,
   InventoryRecord,
   StationRecord,
   TaskRecord,
-} from "./index";
-import { db } from "./index";
+} from "./types";
 
 /**
  * Get all stations from Dexie

@@ -29,7 +29,8 @@ import {
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useFuzzySearch } from "@/hooks/use-fuzzy-search";
 import { useInventory } from "@/hooks/use-inventory";
-import { db, type InventoryRecord } from "@/lib/db/index";
+import { db } from "@/lib/db/index";
+import { type InventoryRecord } from "@/lib/db/types";
 
 function formatNumber(num: number): string {
   return num.toLocaleString("en-US");

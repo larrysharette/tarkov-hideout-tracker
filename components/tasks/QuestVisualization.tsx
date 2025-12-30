@@ -26,7 +26,8 @@ import { Toggle } from "@/components/ui/toggle";
 import { useFuzzySearch } from "@/hooks/use-fuzzy-search";
 import { usePlayerInfo } from "@/hooks/use-player-info";
 import { useQuest } from "@/hooks/use-quest";
-import { db, type TaskRecord } from "@/lib/db";
+import { db } from "@/lib/db/index";
+import { type TaskRecord } from "@/lib/db/types";
 import type { Task } from "@/lib/types/tasks";
 
 import { SearchInput } from "../ui/search-input";

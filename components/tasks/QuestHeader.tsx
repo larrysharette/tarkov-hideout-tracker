@@ -6,7 +6,8 @@ import { useMemo } from "react";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { useQuest } from "@/hooks/use-quest";
-import { db, type TaskRecord } from "@/lib/db";
+import { db } from "@/lib/db/index";
+import { type TaskRecord } from "@/lib/db/types";
 
 export function QuestHeader() {
   const tasks = useLiveQuery(() => db.tasks.toArray(), [], [] as TaskRecord[]);

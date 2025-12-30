@@ -11,7 +11,8 @@ import {
   ComboboxItem,
   ComboboxList,
 } from "@/components/ui/combobox";
-import { db, type TaskRecord } from "@/lib/db";
+import { db } from "@/lib/db/index";
+import { type TaskRecord } from "@/lib/db/types";
 import { type Task } from "@/lib/types/tasks";
 
 interface TaskSelectorProps {

@@ -6,7 +6,8 @@ import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { db, type MapRecord } from "@/lib/db";
+import { db } from "@/lib/db/index";
+import { type MapRecord } from "@/lib/db/types";
 
 export default function AnnotateContent() {
   const allMaps = useLiveQuery(() => db.maps.toArray(), [], [] as MapRecord[]);

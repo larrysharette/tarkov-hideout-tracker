@@ -1,7 +1,8 @@
 import { useLiveQuery } from "dexie-react-hooks";
 import { useMemo } from "react";
 
-import { db, type InventoryRecord, type TaskRecord } from "@/lib/db/index";
+import { db } from "@/lib/db/index";
+import { type InventoryRecord, type TaskRecord } from "@/lib/db/types";
 import type { Item } from "@/lib/types/item";
 import type { Task } from "@/lib/types/tasks";
 

@@ -27,7 +27,8 @@ import {
 } from "@/components/ui/table";
 import { useFuzzySearch } from "@/hooks/use-fuzzy-search";
 import { useTaskWatchlist } from "@/hooks/use-task-watchlist";
-import { db, type TaskRecord } from "@/lib/db";
+import { db } from "@/lib/db/index";
+import { type TaskRecord } from "@/lib/db/types";
 import type { Task } from "@/lib/types/tasks";
 
 export default function WatchlistTasksContent() {

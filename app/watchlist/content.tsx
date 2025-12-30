@@ -9,7 +9,8 @@ import { WatchlistMap } from "@/components/watchlist/WatchlistMap";
 import { WatchlistTasks } from "@/components/watchlist/WatchlistTasks";
 import { useInventory } from "@/hooks/use-inventory";
 import { useWatchlistData } from "@/hooks/use-watchlist-data";
-import { db, type MapRecord } from "@/lib/db";
+import { db } from "@/lib/db/index";
+import { type MapRecord } from "@/lib/db/types";
 
 import { useSearchState } from "./useSearchState";
 
