@@ -6,6 +6,16 @@ interface ChangelogEntry {
 
 export const changelogEntries: ChangelogEntry[] = [
   {
+    version: "0.2.0",
+    date: "2025-12-30",
+    changes: [
+      "Migrated data storage from localStorage to IndexedDB database for improved performance and reliability",
+      "Added a migration component to handle the migration from localStorage to IndexedDB",
+      "Added a new Annotation page to allow users to annotate maps with tasks and items",
+      "Updated the watchlist page to show the map with annotations on it from the watchlist tasks and items",
+    ],
+  },
+  {
     version: "0.1.3",
     date: "2025-12-29",
     changes: [

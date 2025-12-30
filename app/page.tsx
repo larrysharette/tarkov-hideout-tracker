@@ -244,26 +244,92 @@ export default function Page() {
           </div>
         </div>
 
-        <div>
+        <div className="space-y-8">
           <h2 className="text-2xl md:text-3xl font-bold mb-4">Watchlist</h2>
-          <p className="text-muted-foreground mb-6">
-            A basic watchlist of items that you want to keep track of. The
-            in-game favorite list is great but it's nice to know how MANY of the
-            item we still need. This helps with that.
-          </p>
-          <div className="rounded-lg border overflow-hidden">
-            <Image
-              src="/watchlist.webp"
-              alt="Watchlist screen"
-              width={1200}
-              height={800}
-              className="w-full h-auto"
-            />
+          <div className="flex flex-col md:flex-row gap-4">
+            <div>
+              <h3 className="text-xl md:text-2xl font-bold mb-4">
+                Watchlist Overview
+              </h3>
+              <ul className="text-left max-w-2xl mx-auto space-y-2 text-muted-foreground list-disc list-inside">
+                <li>
+                  Watchlist both items and tasks to keep track of what you need
+                </li>
+                <li>
+                  View your watchlist filtered by map to see what you need for
+                  each location
+                </li>
+                <li>
+                  Map overview shows all your watchlisted items and tasks
+                  organized by map
+                </li>
+                <li>
+                  See quantities needed and what you already have collected for
+                  each item
+                </li>
+                <li>
+                  Filter tasks and items by map to focus on specific locations
+                </li>
+              </ul>
+            </div>
+            <div>
+              <div className="rounded-lg border overflow-hidden">
+                <Image
+                  src="/updated_watchlist.webp"
+                  alt="Watchlist overview screen"
+                  width={1200}
+                  height={800}
+                  className="w-full h-auto"
+                />
+              </div>
+              <p className="text-sm text-muted-foreground mt-4">
+                View your watchlist items and tasks filtered by map with an
+                interactive map overview.
+              </p>
+            </div>
           </div>
-          <p className="text-sm text-muted-foreground mt-4">
-            Your watchlist shows quantities needed and what you already have
-            collected.
-          </p>
+          <Separator />
+          <div className="flex flex-col md:flex-row gap-4">
+            <div>
+              <div className="rounded-lg border overflow-hidden">
+                <Image
+                  src="/annotations.webp"
+                  alt="Map annotations feature"
+                  width={1200}
+                  height={800}
+                  className="w-full h-auto"
+                />
+              </div>
+              <p className="text-sm text-muted-foreground mt-4">
+                Add custom annotations to maps to mark task locations and item
+                spawns.
+              </p>
+            </div>
+            <div>
+              <h3 className="text-xl md:text-2xl font-bold mb-4">
+                Map Annotations
+              </h3>
+              <ul className="text-left max-w-2xl mx-auto space-y-2 text-muted-foreground list-disc list-inside">
+                <li>
+                  Add custom pins to maps to mark task locations and item spawns
+                </li>
+                <li>
+                  Annotate tasks with specific objectives to track where you
+                  need to go
+                </li>
+                <li>
+                  Mark item locations on maps to remember where to find them
+                </li>
+                <li>
+                  Your annotations are saved and displayed on the watchlist map
+                  overview
+                </li>
+                <li>
+                  Click on pins to see details and manage your annotations
+                </li>
+              </ul>
+            </div>
+          </div>
         </div>
       </section>
 
