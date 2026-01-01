@@ -6,6 +6,17 @@ interface ChangelogEntry {
 
 export const changelogEntries: ChangelogEntry[] = [
   {
+    version: "0.2.1",
+    date: "2026-01-01",
+    changes: [
+      "Reworked the annotation page to have zoom and pan controls",
+      "Added the ability to control the pin size on the annotation and watchlist pages",
+      "Fixed a bug where newly placed pins were disappearing",
+      "Updated the logic to allow users to move pins after they've been placed",
+      "Updated item pins to use the item icon instead of a map pin icon. This is for more visual clarity and between items and tasks.",
+    ],
+  },
+  {
     version: "0.2.0",
     date: "2025-12-30",
     changes: [
