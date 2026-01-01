@@ -60,3 +60,11 @@ export function stripInvalidProperties<T extends z.ZodRawShape>(
 
   return result as Partial<z.infer<z.ZodObject<T>>>;
 }
+
+// Convert camelCase to Title Case
+export function formatObjectiveType(type: string): string {
+  return type
+    .replace(/([A-Z])/g, " $1") // Add space before capital letters
+    .replace(/^./, (str) => str.toUpperCase()) // Capitalize first letter
+    .trim();
+}

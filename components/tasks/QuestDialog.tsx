@@ -25,6 +25,7 @@ import { Separator } from "@/components/ui/separator";
 import { useQuest } from "@/hooks/use-quest";
 import { useTaskWatchlist } from "@/hooks/use-task-watchlist";
 import type { Task } from "@/lib/types/tasks";
+import { formatObjectiveType } from "@/lib/utils";
 
 interface QuestDialogProps {
   quest: Task | null;
@@ -32,14 +33,6 @@ interface QuestDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onQuestClick?: (quest: Task) => void;
-}
-
-// Convert camelCase to Title Case
-function formatObjectiveType(type: string): string {
-  return type
-    .replace(/([A-Z])/g, " $1") // Add space before capital letters
-    .replace(/^./, (str) => str.toUpperCase()) // Capitalize first letter
-    .trim();
 }
 
 // Recursively collect all prerequisite task IDs

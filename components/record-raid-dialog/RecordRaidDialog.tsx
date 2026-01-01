@@ -159,12 +159,20 @@ export function RecordRaidDialog() {
     markQuestsAsCompleted,
   ]);
 
+  function handleOnOpenChange(open: boolean) {
+    if (!open) {
+      setShowSummary(false);
+      setSummary(null);
+    }
+    setOpen(open);
+  }
+
   const hasValidItems = raidItems.some(
     (raidItem) => raidItem.item && raidItem.quantity > 0
   );
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOnOpenChange}>
       <DialogTrigger render={<Button>Record Raid</Button>} />
       <DialogContent size="lg" className="max-h-[90vh] flex flex-col max-w-2xl">
         <DialogHeader>
@@ -199,7 +207,15 @@ export function RecordRaidDialog() {
 
         <DialogFooter>
           {showSummary ? (
-            <Button onClick={() => setOpen(false)}>Close</Button>
+            <Button
+              onClick={() => {
+                setOpen(false);
+                setShowSummary(false);
+                setSummary(null);
+              }}
+            >
+              Close
+            </Button>
           ) : (
             <>
               <Button variant="outline" onClick={() => setOpen(false)}>

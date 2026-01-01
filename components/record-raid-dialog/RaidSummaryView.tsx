@@ -13,7 +13,7 @@ interface RaidSummaryViewProps {
 
 export function RaidSummaryView({ summary }: RaidSummaryViewProps) {
   return (
-    <ScrollArea className="flex-1 pr-4 min-h-0">
+    <ScrollArea className="flex-1 pr-4 min-h-0 max-h-[500px] overflow-y-auto">
       <div className="space-y-4">
         {/* Hideout Progress */}
         {summary.hideoutProgress.length > 0 && (
@@ -47,8 +47,8 @@ export function RaidSummaryView({ summary }: RaidSummaryViewProps) {
                         key={item.itemName}
                         className="text-sm text-muted-foreground"
                       >
-                        <span className="font-medium">{item.itemName}</span>
-                        : {item.previousOwned} → {item.newOwned} /{" "}
+                        <span className="font-medium">{item.itemName}</span>:{" "}
+                        {item.previousOwned} → {item.newOwned} /{" "}
                         {item.requiredTotal}
                         {item.newOwned >= item.requiredTotal && (
                           <Badge
@@ -76,10 +76,7 @@ export function RaidSummaryView({ summary }: RaidSummaryViewProps) {
             </div>
             <div className="space-y-2">
               {summary.watchlistProgress.map((item) => (
-                <div
-                  key={item.itemName}
-                  className="bg-muted/50 rounded-lg p-3"
-                >
+                <div key={item.itemName} className="bg-muted/50 rounded-lg p-3">
                   <div className="font-medium mb-1">{item.itemName}</div>
                   <div className="text-sm text-muted-foreground">
                     {item.previousOwned} → {item.newOwned} /{" "}
@@ -145,4 +142,3 @@ export function RaidSummaryView({ summary }: RaidSummaryViewProps) {
     </ScrollArea>
   );
 }
-

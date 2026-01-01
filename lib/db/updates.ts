@@ -242,6 +242,7 @@ export async function removeTaskFromWatchlist(taskId: string): Promise<void> {
 
 /**
  * Update task map position
+ * If a position with the same objectiveId already exists, it will be replaced
  */
 export async function updateTaskMapPosition(
   taskId: string,
@@ -256,9 +257,15 @@ export async function updateTaskMapPosition(
   if (!mapPositions[mapId]) {
     mapPositions[mapId] = [position];
   } else {
-    if (
-      !mapPositions[mapId].some((p) => p.objectiveId === position.objectiveId)
-    ) {
+    // Check if a position with the same objectiveId exists
+    const existingIndex = mapPositions[mapId].findIndex(
+      (p) => p.objectiveId === position.objectiveId
+    );
+    if (existingIndex !== -1) {
+      // Replace existing position
+      mapPositions[mapId][existingIndex] = position;
+    } else {
+      // Add new position
       mapPositions[mapId].push(position);
     }
   }
@@ -284,6 +291,32 @@ export async function removeTaskMapPosition(
   await db.tasks.update(taskId, {
     mapPositions:
       Object.keys(mapPositions).length > 0 ? mapPositions : undefined,
+  });
+}
+
+/**
+ * Remove task map position by objectiveId
+ */
+export async function removeTaskMapPositionByObjectiveId(
+  taskId: string,
+  mapId: string,
+  objectiveId?: string
+): Promise<void> {
+  const task = await db.tasks.get(taskId);
+  if (!task?.mapPositions) return;
+
+  const mapPositions = { ...task.mapPositions };
+  const newMapPositions = mapPositions[mapId].filter(
+    (p) => p.objectiveId !== objectiveId || !objectiveId
+  );
+  if (newMapPositions.length === 0) {
+    delete mapPositions[mapId];
+  } else {
+    mapPositions[mapId] = newMapPositions;
+  }
+
+  await db.tasks.update(taskId, {
+    mapPositions,
   });
 }
 

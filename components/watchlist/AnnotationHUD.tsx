@@ -22,13 +22,28 @@ interface AnnotationHUDProps {
     selectedTaskId: string | null;
     selectedItemName: string | null;
   }) => void;
+  externalTaskSelection?: {
+    taskId: string;
+    objectiveId?: string | null;
+  } | null;
+  externalItemSelection?: string | null;
+  mapSceneRef?: React.RefObject<{
+    resetCamera: () => void;
+    zoomIn: () => void;
+    zoomOut: () => void;
+  } | null>;
+  onMapCoordinateClick?: (x: number, y: number) => void;
 }
 
 export function AnnotationHUD({
   mapId,
   mapName,
   isAnnotationMode,
-  onPlacementStateChange,
+  onPlacementStateChange: _onPlacementStateChange,
+  externalTaskSelection,
+  externalItemSelection,
+  mapSceneRef: _mapSceneRef,
+  onMapCoordinateClick,
 }: AnnotationHUDProps) {
   const taskRecords = useLiveQuery(() => db.tasks.toArray(), []);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
@@ -43,10 +58,11 @@ export function AnnotationHUD({
   } | null>(null);
 
   const mapContainerRef = useRef<HTMLDivElement>(null);
+  const mapClickCoordinatesRef = useRef<{ x: number; y: number } | null>(null);
 
   // Handle map click to place pin
   const handleMapClick = useCallback(
-    (e: PointerEvent) => {
+    (e: PointerEvent | MouseEvent) => {
       // Don't place pin if clicking on a pin, button, or HUD overlay
       if (
         (e.target as HTMLElement).closest("button") ||
@@ -56,22 +72,36 @@ export function AnnotationHUD({
         return;
       }
 
-      if (!isPlacingPin || !mapId || !mapContainerRef.current) return;
+      if (!isPlacingPin || !mapId) return;
 
       e.preventDefault();
       e.stopPropagation();
 
-      const rect = mapContainerRef.current.getBoundingClientRect();
-      const x = Math.max(
-        0,
-        Math.min(100, ((e.clientX - rect.left) / rect.width) * 100)
-      );
-      const y = Math.max(
-        0,
-        Math.min(100, ((e.clientY - rect.top) / rect.height) * 100)
-      );
+      // Use coordinates from 3D scene if available, otherwise calculate from event
+      let x: number, y: number;
+
+      if (mapClickCoordinatesRef.current) {
+        // Use coordinates from react-three-fiber scene
+        x = mapClickCoordinatesRef.current.x;
+        y = mapClickCoordinatesRef.current.y;
+        mapClickCoordinatesRef.current = null; // Clear after use
+      } else if (mapContainerRef.current) {
+        // Fallback to default calculation
+        const rect = mapContainerRef.current.getBoundingClientRect();
+        x = Math.max(
+          0,
+          Math.min(100, ((e.clientX - rect.left) / rect.width) * 100)
+        );
+        y = Math.max(
+          0,
+          Math.min(100, ((e.clientY - rect.top) / rect.height) * 100)
+        );
+      } else {
+        return;
+      }
 
       try {
+        // Handle pin placement (will replace if pin already exists)
         if (selectedTaskId !== null) {
           // Task pin placement
           const objectiveId =
@@ -107,6 +137,7 @@ export function AnnotationHUD({
 
       if (!rect) return;
 
+      // Calculate hover position (for 3D scene, this is approximate)
       const x = Math.max(
         0,
         Math.min(100, ((e.clientX - rect.left) / rect.width) * 100)
@@ -115,6 +146,7 @@ export function AnnotationHUD({
         0,
         Math.min(100, ((e.clientY - rect.top) / rect.height) * 100)
       );
+
       setHoverPosition({ x, y });
     },
     [isPlacingPin, mapContainerRef]
@@ -156,14 +188,53 @@ export function AnnotationHUD({
     }
   }, [isAnnotationMode]);
 
-  // Notify parent of placement state changes
+  // Handle external task/item selection (from AnnotationList)
   useEffect(() => {
-    onPlacementStateChange?.({
-      isPlacingPin,
-      selectedTaskId,
-      selectedItemName,
-    });
-  }, [isPlacingPin, selectedTaskId, selectedItemName, onPlacementStateChange]);
+    if (externalTaskSelection) {
+      setSelectedTaskId(externalTaskSelection.taskId);
+      setSelectedObjectiveId(externalTaskSelection.objectiveId ?? null);
+      setSelectedItemName(null);
+      setIsPlacingPin(externalTaskSelection.objectiveId !== undefined);
+    } else if (externalItemSelection) {
+      setSelectedItemName(externalItemSelection);
+      setSelectedTaskId(null);
+      setSelectedObjectiveId(null);
+      setIsPlacingPin(true);
+    }
+  }, [externalTaskSelection, externalItemSelection]);
+
+  // Expose coordinate handler for MapScene
+  useEffect(() => {
+    if (onMapCoordinateClick) {
+      // Store the handler reference so MapScene can call it
+      interface WindowWithHandler extends Window {
+        __mapCoordinateClickHandler?: (x: number, y: number) => void;
+      }
+      const win = window as WindowWithHandler;
+      win.__mapCoordinateClickHandler = (x: number, y: number) => {
+        mapClickCoordinatesRef.current = { x, y };
+        // Trigger a click event on the map container
+        const container = document.getElementById("map-container");
+        if (container) {
+          const rect = container.getBoundingClientRect();
+          const event = new MouseEvent("click", {
+            bubbles: true,
+            cancelable: true,
+            clientX: rect.left + (x / 100) * container.clientWidth,
+            clientY: rect.top + (y / 100) * container.clientHeight,
+          });
+          container.dispatchEvent(event);
+        }
+      };
+    }
+    return () => {
+      interface WindowWithHandler extends Window {
+        __mapCoordinateClickHandler?: (x: number, y: number) => void;
+      }
+      const win = window as WindowWithHandler;
+      delete win.__mapCoordinateClickHandler;
+    };
+  }, [onMapCoordinateClick]);
 
   // Update cursor style when placing pin
   useEffect(() => {
@@ -172,13 +243,11 @@ export function AnnotationHUD({
 
     if (isPlacingPin) {
       mapContainer.style.cursor = "crosshair";
-    } else {
-      mapContainer.style.cursor = "default";
     }
 
     return () => {
-      if (mapContainer) {
-        mapContainer.style.cursor = "default";
+      if (mapContainer && isPlacingPin) {
+        mapContainer.style.cursor = "";
       }
     };
   }, [isPlacingPin]);
@@ -192,7 +261,7 @@ export function AnnotationHUD({
     <>
       {isPlacingPin && hoverPosition && (
         <div
-          className="absolute z-5 pointer-events-none"
+          className="absolute z-5"
           style={{
             left: `${hoverPosition.x}%`,
             top: `${hoverPosition.y}%`,

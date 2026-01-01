@@ -12,6 +12,13 @@ interface MapPinsProps {
   isAnnotationMode: boolean;
   visiblePinIds?: Set<string>;
   watchlistOnly?: boolean;
+  onPinSelectForReplacement?: (pin: Pin) => void;
+  pinToReplace?: {
+    type: "task" | "item";
+    taskId?: string;
+    objectiveId?: string;
+    itemName?: string;
+  } | null;
 }
 
 export function MapPins({
@@ -20,16 +27,18 @@ export function MapPins({
   isAnnotationMode,
   visiblePinIds,
   watchlistOnly = false,
+  onPinSelectForReplacement,
+  pinToReplace,
 }: MapPinsProps) {
   const pins = useMapPins({ mapId, mapName, isAnnotationMode, watchlistOnly });
 
   const handleRemovePin = useCallback(
     async (pin: Pin) => {
       if (!mapId || !isAnnotationMode) return; // Only allow removal in annotation mode
-      if (pin.type === "task" && pin.taskId) {
-        await removeTaskMapPosition(pin.taskId, mapId);
-      } else if (pin.type === "item" && pin.itemName) {
-        await removeItemMapPosition(pin.itemName, mapId);
+      if (pin.type === "task" && pin.id) {
+        await removeTaskMapPosition(pin.id, mapId);
+      } else if (pin.type === "item" && pin.id) {
+        await removeItemMapPosition(pin.id, mapId);
       }
     },
     [mapId, isAnnotationMode]
@@ -50,14 +59,24 @@ export function MapPins({
           data-pin-element
           className="absolute z-10 pointer-events-auto"
           style={{
-            left: `${pin.x}%`,
-            top: `${pin.y}%`,
+            left: `${pin.position.x}%`,
+            top: `${pin.position.y}%`,
             transform: "translate(-50%, -50%)",
           }}
         >
           <MapPin
             pin={pin}
             onRemove={isAnnotationMode ? handleRemovePin : undefined}
+            onSelectForReplacement={
+              isAnnotationMode ? onPinSelectForReplacement : undefined
+            }
+            isSelectedForReplacement={
+              pinToReplace?.type === pin.type &&
+              (pin.type === "task"
+                ? pinToReplace.taskId === pin.id &&
+                  pinToReplace.objectiveId === pin.objectiveId
+                : pinToReplace.itemName === pin.id)
+            }
           />
         </div>
       ))}

@@ -42,7 +42,7 @@ export function ItemSelector({
   );
 
   const itemNames = items.map((item) => ({
-    value: item.name,
+    value: item.id,
     label: item.name,
     iconLink: item.iconLink,
   }));
@@ -51,7 +51,7 @@ export function ItemSelector({
       items={itemNames}
       value={value}
       onValueChange={(value) => {
-        const item = items.find((i) => i.name === value);
+        const item = items.find((i) => i.name === value || i.id === value);
         if (item) {
           onValueChange(item);
         } else {
@@ -68,7 +68,7 @@ export function ItemSelector({
       >
         {!!value ? (
           <span className="text-nowrap text-xs text-foreground px-2 mr-auto">
-            {items.find((i) => i.name === value)?.name}
+            {items.find((i) => i.name === value || i.id === value)?.name}
           </span>
         ) : undefined}
       </ComboboxInput>

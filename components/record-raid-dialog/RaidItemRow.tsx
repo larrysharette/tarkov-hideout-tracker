@@ -27,6 +27,7 @@ export function RaidItemRow({
   onAddItem,
   getComboboxRef,
 }: RaidItemRowProps) {
+  console.log("raidItem", raidItem);
   return (
     <div className="flex gap-2 items-start bg-background">
       <div
@@ -36,6 +37,7 @@ export function RaidItemRow({
         <ItemSelector
           value={raidItem.item?.id || ""}
           onValueChange={(value) => {
+            console.log("value", value);
             void onUpdate(raidItem.id, { item: value || null });
           }}
           placeholder="Search for an item..."

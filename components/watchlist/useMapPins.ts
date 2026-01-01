@@ -4,21 +4,34 @@ import { useMemo } from "react";
 import { db } from "@/lib/db/index";
 import { type InventoryRecord, type TaskRecord } from "@/lib/db/types";
 
-export interface Pin {
+export type TaskPin = {
   id: string;
-  type: "task" | "item";
-  label: string;
-  x: number;
-  y: number;
+  type: "task";
+  name: string;
   objectiveId?: string;
-  taskId?: string;
-  itemName?: string;
-  // Additional data for tooltips
-  taskName?: string;
   objectiveType?: string;
   objectiveDescription?: string;
-  itemIconLink?: string;
-}
+  position: {
+    icon?: string;
+    x: number;
+    y: number;
+  };
+  task: TaskRecord;
+};
+
+export type ItemPin = {
+  id: string;
+  type: "item";
+  name: string;
+  position: {
+    icon?: string;
+    x: number;
+    y: number;
+  };
+  inventory: InventoryRecord;
+};
+
+export type Pin = TaskPin | ItemPin;
 
 interface UseMapPinsProps {
   mapId: string | null;
@@ -66,20 +79,22 @@ export function useMapPins({
               ? task.objectives.find((o) => o.id === position.objectiveId)
               : null;
 
-          allPins.push({
-            id: `task-${task.id}-${position.objectiveId ?? "main"}`,
+          const taskPin: TaskPin = {
+            id: `${task.id}-${position.objectiveId ?? "main"}`,
             type: "task",
-            label: objective
-              ? `${task.name} - ${objective.type} - ${objective.description}`
-              : task.name,
-            x: position.x,
-            y: position.y,
-            objectiveId: position.objectiveId,
-            taskId: task.id,
-            taskName: task.name,
+            name: task.name,
+            objectiveId: objective?.id,
             objectiveType: objective?.type,
             objectiveDescription: objective?.description,
-          });
+            position: {
+              icon: undefined,
+              x: position.x,
+              y: position.y,
+            },
+            task: task,
+          };
+
+          allPins.push(taskPin);
         }
       }
     }
@@ -89,13 +104,15 @@ export function useMapPins({
       if (inventoryRecord.mapPositions?.[mapId]) {
         const position = inventoryRecord.mapPositions[mapId];
         allPins.push({
-          id: `item-${inventoryRecord.name}`,
+          id: inventoryRecord.id,
           type: "item",
-          label: inventoryRecord.name,
-          x: position.x,
-          y: position.y,
-          itemName: inventoryRecord.name,
-          itemIconLink: inventoryRecord.iconLink,
+          name: inventoryRecord.name,
+          position: {
+            icon: inventoryRecord.iconLink,
+            x: position.x,
+            y: position.y,
+          },
+          inventory: inventoryRecord,
         });
       }
     }
